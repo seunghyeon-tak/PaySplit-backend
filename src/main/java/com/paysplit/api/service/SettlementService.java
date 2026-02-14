@@ -74,5 +74,6 @@ public class SettlementService {
         }
 
         settlement.complete();
+        settlement.getPayment().settle();
     }
 }
