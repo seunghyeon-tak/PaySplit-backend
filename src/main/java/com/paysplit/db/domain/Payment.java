@@ -68,4 +68,9 @@ public class Payment {
                 && amount.compareTo(BigDecimal.ZERO) > 0
                 && settledAt == null;
     }
+
+    public void settle() {
+        this.status = PaymentStatus.SETTLED;
+        this.settledAt = LocalDateTime.now();
+    }
 }
