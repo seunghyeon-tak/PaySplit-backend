@@ -74,13 +74,4 @@ public class SettlementService {
 
         settlementItemRepository.saveAll(items);
     }
-
-    public void completeSettlement(Settlement settlement) {
-        if (settlement.getStatus() != SettlementStatus.READY) {
-            throw new SettlementException(INVALID_SETTLEMENT_STATE);
-        }
-
-        settlement.complete();
-        settlement.getPayment().settle();
-    }
 }
