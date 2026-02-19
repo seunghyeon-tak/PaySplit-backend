@@ -1,0 +1,1 @@
+alter table settlements add constraint uk_settlement_payment unique (payment_id);
