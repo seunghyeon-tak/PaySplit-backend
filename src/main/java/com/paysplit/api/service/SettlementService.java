@@ -10,6 +10,7 @@ import com.paysplit.db.enums.SettlementType;
 import com.paysplit.db.repository.SettlementItemRepository;
 import com.paysplit.db.repository.SettlementRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -39,8 +40,14 @@ public class SettlementService {
                 .totalAmount(payment.getAmount())
                 .build();
 
-        // 저장
-        return settlementRepository.save(settlement);
+        try {
+            // 저장
+            return settlementRepository.save(settlement);
+        } catch (DataIntegrityViolationException e) {
+            // db unique 위반 시 도메인 예외로 변환
+            throw new SettlementException(ALREADY_SETTLED_PAYMENT);
+        }
+
     }
 
     public void createSettlementItems(
