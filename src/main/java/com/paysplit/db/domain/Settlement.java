@@ -1,5 +1,7 @@
 package com.paysplit.db.domain;
 
+import com.paysplit.common.error.settlement.SettlementErrorCode;
+import com.paysplit.common.error.settlement.SettlementException;
 import com.paysplit.db.enums.SettlementStatus;
 import com.paysplit.db.enums.SettlementType;
 import jakarta.persistence.*;
@@ -13,10 +15,19 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import static com.paysplit.common.error.settlement.SettlementErrorCode.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "settlements")
+@Table(
+        name = "settlements",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_settlement_payment",
+                        columnNames = "payment_id"
+                )
+        }
+)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -58,7 +69,14 @@ public class Settlement {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    public void complete() {
-        this.status = SettlementStatus.COMPLETED;
+    public void changeStatus(SettlementStatus next) {
+        if (!this.status.canTransitTo(next)) {
+            throw new SettlementException(INVALID_SETTLEMENT_STATE);
+        }
+        this.status = next;
+
+        if (next == SettlementStatus.COMPLETED) {
+            this.completedAt = LocalDateTime.now();
+        }
     }
 }

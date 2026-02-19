@@ -5,6 +5,7 @@ import com.paysplit.api.dto.settlement.request.SettlementExecuteRequest;
 import com.paysplit.api.dto.settlement.response.SettlementExecuteResponse;
 import com.paysplit.api.dto.settlement.result.SettlementItemResult;
 import com.paysplit.api.service.PaymentService;
+import com.paysplit.api.service.SettlementFailureService;
 import com.paysplit.api.service.SettlementPolicyService;
 import com.paysplit.api.service.SettlementService;
 import com.paysplit.common.annotation.Business;
@@ -12,6 +13,7 @@ import com.paysplit.common.error.payment.PaymentErrorCode;
 import com.paysplit.common.error.payment.PaymentException;
 import com.paysplit.db.domain.Payment;
 import com.paysplit.db.domain.Settlement;
+import com.paysplit.db.enums.SettlementStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SettlementExecuteBusiness {
     private final SettlementService settlementService;
+    private final SettlementFailureService settlementFailureService;
     private final PaymentService paymentService;
     private final SettlementPolicyService settlementPolicyService;
     private final SettlementExecuteConverter settlementExecuteConverter;
@@ -34,17 +37,26 @@ public class SettlementExecuteBusiness {
             throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATE);
         }
 
-        // 2. Settlement 엔티티 생성
+        // 2. Settlement 엔티티 생성 (READY 상태)
         Settlement settlement = settlementService.createSettlement(payment);
 
-        // 3. 정산 정책 적용 (금액 분배 계산)
-        List<SettlementItemResult> results = settlementPolicyService.calculate(settlement);
+        try {
+            // 3. 정산 시작
+            settlement.changeStatus(SettlementStatus.IN_PROGRESS);
 
-        // 4. SettlementItem 생성 및 저장
-        settlementService.createSettlementItems(settlement, results);
+            // 4. 정산 정책 적용 (금액 분배 계산)
+            List<SettlementItemResult> results = settlementPolicyService.calculate(settlement);
 
-        // 5. 응답 DTO 변환 및 반환
-        settlementService.completeSettlement(settlement);
+            // 5. SettlementItem 생성 및 저장
+            settlementService.createSettlementItems(settlement, results);
+
+            // 6. 완료 처리
+            settlement.changeStatus(SettlementStatus.COMPLETED);
+            payment.settle();
+        } catch (Exception e) {
+            settlementFailureService.markFailed(settlement.getId());
+            throw e;
+        }
 
         return settlementExecuteConverter.toResponse(settlement);
     }

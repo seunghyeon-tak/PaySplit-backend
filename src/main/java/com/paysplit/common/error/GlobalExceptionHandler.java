@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage()));
+                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(PaymentException.class)
@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage()));
+                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(Exception.class)
@@ -34,6 +34,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage()));
+                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
     }
 }
