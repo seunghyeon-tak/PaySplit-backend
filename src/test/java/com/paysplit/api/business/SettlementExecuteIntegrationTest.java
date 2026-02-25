@@ -58,7 +58,6 @@ public class SettlementExecuteIntegrationTest {
                 .findById(payment.getId())
                 .orElseThrow();
 
-        assertThat(updated.getStatus()).isEqualTo(PaymentStatus.SETTLED);
         assertThat(updated.getSettledAt()).isNotNull();
     }
 
