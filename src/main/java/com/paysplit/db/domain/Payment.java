@@ -70,7 +70,6 @@ public class Payment {
     }
 
     public void settle() {
-        this.status = PaymentStatus.SETTLED;
         this.settledAt = LocalDateTime.now();
     }
 }

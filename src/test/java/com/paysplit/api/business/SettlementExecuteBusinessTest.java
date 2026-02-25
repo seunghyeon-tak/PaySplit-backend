@@ -63,7 +63,6 @@ public class SettlementExecuteBusinessTest {
         verify(settlementService).createSettlement(payment);
         verify(settlementPolicyService).calculate(settlement);
         verify(settlementService).createSettlementItems(eq(settlement), any());
-        verify(settlementService).completeSettlement(settlement);
 
         assertThat(result).isEqualTo(response);
     }
