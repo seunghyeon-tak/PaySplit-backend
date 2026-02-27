@@ -65,7 +65,7 @@ Payment.settledAt 설정
 - 예외 발생 가능성
   - INVALID_PARTY_SIZE
   - INVALID_DISTRIBUTION_AMOUNT
-  - SETTLEMENT_AMOUNT_MISMATCH
+  - INTERNAL_SERVER_ERROR
 
 ### step 6. SettlementItem 생성
 - SettlementItemRepository.saveAll()

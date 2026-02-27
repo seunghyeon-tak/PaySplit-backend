@@ -14,7 +14,7 @@ public enum PaymentErrorCode implements ErrorCode {
     INVALID_PAYMENT_STATE(
             "PAYMENT_002",
             "잘못된 결제 상태",
-            HttpStatus.NOT_FOUND
+            HttpStatus.CONFLICT
     )
     ;
 

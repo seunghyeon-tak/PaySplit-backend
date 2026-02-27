@@ -75,7 +75,7 @@ public class SettlementPolicyService {
                         .add(platformSupportAmount);
 
         if (calculatedTotal.compareTo(totalAmount) != 0) {
-            throw new SettlementException(SETTLEMENT_AMOUNT_MISMATCH);
+            throw new SettlementException(INTERNAL_SERVER_ERROR);
         }
 
         // 6. 결과 생성
