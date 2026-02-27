@@ -15,10 +15,12 @@ import com.paysplit.db.domain.Payment;
 import com.paysplit.db.domain.Settlement;
 import com.paysplit.db.enums.SettlementStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Business
 @Transactional
 @RequiredArgsConstructor
@@ -59,7 +61,11 @@ public class SettlementExecuteBusiness {
             settlement.changeStatus(SettlementStatus.COMPLETED);
             payment.settle();
         } catch (Exception e) {
-            settlementFailureService.markFailed(settlement.getId());
+            try {
+                settlementFailureService.markFailed(settlement.getId());
+            } catch (Exception markFailedException) {
+                log.warn("Failed to mark settlement as FAILED. settlementId={}", settlement.getId(), markFailedException);
+            }
             throw e;
         }
 
