@@ -13,11 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static com.paysplit.common.error.settlement.SettlementErrorCode.ALREADY_SETTLED_PAYMENT;
-import static com.paysplit.common.error.settlement.SettlementErrorCode.INVALID_SETTLEMENT_STATE;
 
 @Service
 @RequiredArgsConstructor
@@ -25,12 +23,18 @@ public class SettlementService {
     private final SettlementRepository settlementRepository;
     private final SettlementItemRepository settlementItemRepository;
 
-    public Settlement createSettlement(Payment payment) {
-        // 이미 정산된 결제인지 확인
-        if (settlementRepository.existsByPayment(payment)) {
-            throw new SettlementException(ALREADY_SETTLED_PAYMENT);
-        }
+    /*
+     * 멱등 보장
+     * - 없으면 생성
+     * - 동시성으로 유니크 충돌 나면 기존 settlement 조회해서 반환
+     * */
+    public Settlement createOrGetSettlement(Payment payment) {
+        // 1) 먼저 조회해보고 있으면 반환 (빠른 경로)
+        return settlementRepository.findByPayment(payment)
+                .orElseGet(() -> createSettlementInternal(payment));
+    }
 
+    public Settlement createSettlementInternal(Payment payment) {
         // settlement Entity 생성
         Settlement settlement = Settlement.builder()
                 .payment(payment)
@@ -44,8 +48,9 @@ public class SettlementService {
             // 저장
             return settlementRepository.save(settlement);
         } catch (DataIntegrityViolationException e) {
-            // db unique 위반 시 도메인 예외로 변환
-            throw new SettlementException(ALREADY_SETTLED_PAYMENT);
+            // 동시성으로 다른 트랜잭션이 먼저 만들었으면 기존 거 반환
+            return settlementRepository.findByPayment(payment)
+                    .orElseThrow(() -> new SettlementException(ALREADY_SETTLED_PAYMENT));
         }
 
     }
@@ -64,7 +69,8 @@ public class SettlementService {
 //        }
 
         // stream
-        List<SettlementItem> items = results.stream().map(result -> SettlementItem.builder()
+        List<SettlementItem> items = results.stream()
+                .map(result -> SettlementItem.builder()
                         .settlement(settlement)
                         .receiverType(result.getReceiverType())
                         .receiverId(result.getReceiverId())

@@ -30,27 +30,32 @@ public class SettlementExecuteBusiness {
     private final SettlementExecuteConverter settlementExecuteConverter;
 
     public SettlementExecuteResponse execute(SettlementExecuteRequest request) {
-        // 1. 결제 정보 조회 (유효성 확인)
-        Payment payment = paymentService.getById(request.getPaymentId());
+        // 1. 결제 정보 조회 (+ 비관락)
+        Payment payment = paymentService.getByIdForUpdate(request.getPaymentId());
 
         if (!payment.isPayable()) {
             throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATE);
         }
 
-        // 2. Settlement 엔티티 생성 (READY 상태)
-        Settlement settlement = settlementService.createSettlement(payment);
+        // 2. Settlement 멱등 생성/조회
+        Settlement settlement = settlementService.createOrGetSettlement(payment);
+
+        // 3. 이미 처리된/진행중이면 그대로 반환 (멱등)
+        if (settlement.getStatus() != SettlementStatus.READY) {
+            return settlementExecuteConverter.toResponse(settlement);
+        }
 
         try {
-            // 3. 정산 시작
+            // 4. 정산 시작
             settlement.changeStatus(SettlementStatus.IN_PROGRESS);
 
-            // 4. 정산 정책 적용 (금액 분배 계산)
+            // 5. 정산 정책 적용 (금액 분배 계산)
             List<SettlementItemResult> results = settlementPolicyService.calculate(settlement);
 
-            // 5. SettlementItem 생성 및 저장
+            // 6. SettlementItem 생성 및 저장
             settlementService.createSettlementItems(settlement, results);
 
-            // 6. 완료 처리
+            // 7. 완료 처리
             settlement.changeStatus(SettlementStatus.COMPLETED);
             payment.settle();
         } catch (Exception e) {
