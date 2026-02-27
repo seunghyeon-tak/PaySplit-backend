@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     boolean existsByPayment(Payment payment);
     long countByPayment(Payment payment);
+
+    Optional<Settlement> findByPayment(Payment payment);
 }

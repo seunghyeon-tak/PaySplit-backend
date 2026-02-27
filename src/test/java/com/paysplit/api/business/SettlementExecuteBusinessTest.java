@@ -3,12 +3,14 @@ package com.paysplit.api.business;
 import com.paysplit.api.converter.SettlementExecuteConverter;
 import com.paysplit.api.dto.settlement.request.SettlementExecuteRequest;
 import com.paysplit.api.dto.settlement.response.SettlementExecuteResponse;
+import com.paysplit.api.dto.settlement.result.SettlementItemResult;
 import com.paysplit.api.service.PaymentService;
 import com.paysplit.api.service.SettlementPolicyService;
 import com.paysplit.api.service.SettlementService;
 import com.paysplit.common.error.payment.PaymentException;
 import com.paysplit.db.domain.Payment;
 import com.paysplit.db.domain.Settlement;
+import com.paysplit.db.enums.SettlementStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,9 +52,10 @@ public class SettlementExecuteBusinessTest {
         Settlement settlement = mock(Settlement.class);
         SettlementExecuteResponse response = mock(SettlementExecuteResponse.class);
 
-        when(paymentService.getById(paymentId)).thenReturn(payment);
+        when(paymentService.getByIdForUpdate(paymentId)).thenReturn(payment);
         when(payment.isPayable()).thenReturn(true);
-        when(settlementService.createSettlement(payment)).thenReturn(settlement);
+        when(settlementService.createOrGetSettlement(payment)).thenReturn(settlement);
+        when(settlement.getStatus()).thenReturn(SettlementStatus.READY);
         when(settlementPolicyService.calculate(settlement)).thenReturn(List.of());
         when(settlementExecuteConverter.toResponse(settlement)).thenReturn(response);
 
@@ -60,7 +63,7 @@ public class SettlementExecuteBusinessTest {
         SettlementExecuteResponse result = settlementExecuteBusiness.execute(request);
 
         // then
-        verify(settlementService).createSettlement(payment);
+        verify(settlementService).createOrGetSettlement(payment);
         verify(settlementPolicyService).calculate(settlement);
         verify(settlementService).createSettlementItems(eq(settlement), any());
 
@@ -76,7 +79,7 @@ public class SettlementExecuteBusinessTest {
 
         Payment payment = mock(Payment.class);
 
-        when(paymentService.getById(paymentId)).thenReturn(payment);
+        when(paymentService.getByIdForUpdate(paymentId)).thenReturn(payment);
         when(payment.isPayable()).thenReturn(false);
 
         // when & then
