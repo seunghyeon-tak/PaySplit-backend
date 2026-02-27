@@ -33,7 +33,7 @@ public enum SettlementErrorCode implements ErrorCode {
             "정산 인원 수가 올바르지 않습니다",
             HttpStatus.BAD_REQUEST
     ),
-    SETTLEMENT_AMOUNT_MISMATCH(
+    INTERNAL_SERVER_ERROR(
             "SETTLEMENT_006",
             "정산 금액 합계가 일치하지 않습니다",
             HttpStatus.INTERNAL_SERVER_ERROR
