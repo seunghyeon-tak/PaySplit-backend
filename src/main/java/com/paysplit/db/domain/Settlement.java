@@ -24,7 +24,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_settlement_payment",
-                        columnNames = "payment_id"
+                        columnNames = {"payment_id", "type"}
                 )
         }
 )
