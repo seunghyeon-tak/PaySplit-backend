@@ -19,6 +19,8 @@ import static com.paysplit.common.error.settlement.SettlementErrorCode.*;
 @Service
 @RequiredArgsConstructor
 public class SettlementPolicyService {
+    private static final int MONEY_SCALE = 0;
+    private static final RoundingMode MONEY_ROUNDING = RoundingMode.DOWN;
 
     public List<SettlementItemResult> calculate(Settlement settlement) {
 
@@ -33,8 +35,13 @@ public class SettlementPolicyService {
         // 1. 기본 1인 결제 금액
         BigDecimal basePayAmount = totalAmount.divide(
                 BigDecimal.valueOf(partySize),
-                0,
+                MONEY_SCALE,
                 RoundingMode.DOWN
+        );
+
+        // 1-1) 나머지(잔돈) = total - base * partySize (항상 0 이상)
+        BigDecimal remainder = totalAmount.subtract(
+                basePayAmount.multiply(BigDecimal.valueOf(partySize))
         );
 
         // 2. 파티장 할인 금액 계산 (정책 기반)
@@ -44,15 +51,24 @@ public class SettlementPolicyService {
                 totalAmount
         );
 
-        BigDecimal leaderPayAmount = basePayAmount.subtract(leaderDiscountAmount);
+        // 할인 금액은 0이상이어야함
+        if (leaderDiscountAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new SettlementException(INVALID_DISTRIBUTION_AMOUNT);
+        }
+
+        // 3. 파티장 결제 금액 = base - discount + remainder
+        // remainder는 파티장에게 몰아줘서 전체 합계가 total과 정확히 같아지도록 함
+        BigDecimal leaderPayAmount = basePayAmount
+                .subtract(leaderDiscountAmount)
+                .add(remainder);
         if (leaderPayAmount.compareTo(BigDecimal.ZERO) < 0) {
             throw new SettlementException(INVALID_DISTRIBUTION_AMOUNT);
         }
 
-        // 3. 플랫폼 지원 금액 (파티장 할인과 동일)
+        // 4. 플랫폼 지원 금액 (파티장 할인과 동일)
         BigDecimal platformSupportAmount = leaderDiscountAmount;
 
-        // 4. 정합성 검증
+        // 5. 정합성 검증
         BigDecimal calculatedTotal =
                 basePayAmount.multiply(BigDecimal.valueOf(partySize - 1))
                         .add(leaderPayAmount)
@@ -62,10 +78,10 @@ public class SettlementPolicyService {
             throw new SettlementException(SETTLEMENT_AMOUNT_MISMATCH);
         }
 
-        // 5. 결과 생성
+        // 6. 결과 생성
         List<SettlementItemResult> results = new ArrayList<>();
 
-        // 파티원 결제
+        // 파티원 결제 (partySize - 1 명)
         for (int i = 0; i < partySize - 1; i++) {
             results.add(
                     SettlementItemResult.builder()
@@ -76,7 +92,7 @@ public class SettlementPolicyService {
             );
         }
 
-        // 파티장 결제
+        // 파티장 결제 (잔돈 포함)
         results.add(
                 SettlementItemResult.builder()
                         .receiverType(ReceiverType.LEADER_PAYMENT)
@@ -97,14 +113,27 @@ public class SettlementPolicyService {
         return results;
     }
 
+    /*
+     * 정책 금액 계산
+     * - FIXED : 그대로
+     * - RATE : total * value 를 원 단위로 반올림(여기서는 DOWN)
+     *
+     * 주의 : RATE의 value가 0.1(=10%)인지 10(=10%)인지 스펙을 명확히 해야 함.
+     * 현재는 "0~1 비율"이라고 가정.
+     * */
     private BigDecimal calculatePolicyAmount(
             FeeType type,
             BigDecimal value,
             BigDecimal totalAmount
     ) {
         if (type == FeeType.FIXED) {
-            return value;
+            // FIXED도 원 단위 강제
+            return value.setScale(MONEY_SCALE, MONEY_ROUNDING);
         }
-        return totalAmount.multiply(value);
+
+        // RATE
+        return totalAmount
+                .multiply(value)
+                .setScale(MONEY_SCALE, MONEY_ROUNDING);
     }
 }
