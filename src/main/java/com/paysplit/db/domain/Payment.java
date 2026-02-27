@@ -50,6 +50,9 @@ public class Payment {
     @Column(name = "external_payment_id", length = 100)
     private String externalPaymentId;  // 어디서 결제되었는가? (PG사 결제 ID)
 
+    @Column(name = "pg_provider", length = 30)
+    private String pgProvider;
+
     @Column(nullable = false, length = 10)
     private String currency;
 

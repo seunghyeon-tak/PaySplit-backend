@@ -1,0 +1,1 @@
+alter table payments add constraint uk_payments_pg_external unique (pg_provider, external_payment_id);
