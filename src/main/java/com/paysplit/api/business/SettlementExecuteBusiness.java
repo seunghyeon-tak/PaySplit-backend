@@ -65,7 +65,7 @@ public class SettlementExecuteBusiness {
 
             // 7. 완료 처리
             settlement.changeStatus(SettlementStatus.COMPLETED);
-            payment.settle();
+            paymentService.settleIfNotSettled(payment.getId());
         } catch (Exception e) {
             try {
                 settlementFailureService.markFailed(settlement.getId());
