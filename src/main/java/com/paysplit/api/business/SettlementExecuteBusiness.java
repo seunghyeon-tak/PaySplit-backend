@@ -11,14 +11,18 @@ import com.paysplit.api.service.SettlementService;
 import com.paysplit.common.annotation.Business;
 import com.paysplit.common.error.payment.PaymentErrorCode;
 import com.paysplit.common.error.payment.PaymentException;
+import com.paysplit.common.error.settlement.SettlementException;
 import com.paysplit.db.domain.Payment;
 import com.paysplit.db.domain.Settlement;
 import com.paysplit.db.enums.SettlementStatus;
+import com.paysplit.db.enums.SettlementType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.paysplit.common.error.settlement.SettlementErrorCode.*;
 
 @Slf4j
 @Business
@@ -39,8 +43,29 @@ public class SettlementExecuteBusiness {
             throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATE);
         }
 
+        SettlementType type = request.getType();
+        if (type == null) {
+            throw new SettlementException(INVALID_SETTLEMENT_TYPE_REQUEST);
+        }
+
         // 2. Settlement 멱등 생성/조회
-        Settlement settlement = settlementService.createOrGetSettlement(payment);
+        Settlement original = null;
+        if (type == SettlementType.REVERSAL || type == SettlementType.ADJUSTMENT) {
+            if (request.getOriginalSettlementId() == null) {
+                throw new SettlementException(ORIGINAL_SETTLEMENT_REQUIRED);
+            }
+
+            original = settlementService.getById(request.getOriginalSettlementId());
+
+            // 원본 정산과 결제 일치 검증
+            if (original.getPayment() == null || original.getPayment().getId() == null
+                    || !original.getPayment().getId().equals(payment.getId())) {
+                throw new SettlementException(ORIGINAL_SETTLEMENT_PAYMENT_MISMATCH);
+            }
+        }
+
+        // payment + type 기준 멱등 생성/조회
+        Settlement settlement = settlementService.createOrGetSettlement(payment, type, original);
 
         // 3. 이미 처리된/진행중이면 그대로 반환 (멱등)
         if (settlement.getStatus() == SettlementStatus.COMPLETED
@@ -65,7 +90,11 @@ public class SettlementExecuteBusiness {
 
             // 7. 완료 처리
             settlement.changeStatus(SettlementStatus.COMPLETED);
-            paymentService.settleIfNotSettled(payment.getId());
+
+            if (type == SettlementType.NORMAL) {
+                paymentService.settleIfNotSettled(payment.getId());
+            }
+
         } catch (Exception e) {
             try {
                 settlementFailureService.markFailed(settlement.getId());

@@ -5,12 +5,14 @@ import com.paysplit.api.dto.settlement.request.SettlementExecuteRequest;
 import com.paysplit.api.dto.settlement.response.SettlementExecuteResponse;
 import com.paysplit.api.dto.settlement.result.SettlementItemResult;
 import com.paysplit.api.service.PaymentService;
+import com.paysplit.api.service.SettlementFailureService;
 import com.paysplit.api.service.SettlementPolicyService;
 import com.paysplit.api.service.SettlementService;
 import com.paysplit.common.error.payment.PaymentException;
 import com.paysplit.db.domain.Payment;
 import com.paysplit.db.domain.Settlement;
 import com.paysplit.db.enums.SettlementStatus;
+import com.paysplit.db.enums.SettlementType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,51 +24,66 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class SettlementExecuteBusinessTest {
+class SettlementExecuteBusinessTest {
+
     @Mock
     private SettlementService settlementService;
-
+    @Mock
+    private SettlementFailureService settlementFailureService;
     @Mock
     private PaymentService paymentService;
-
     @Mock
     private SettlementPolicyService settlementPolicyService;
-
     @Mock
     private SettlementExecuteConverter settlementExecuteConverter;
 
     @InjectMocks
     private SettlementExecuteBusiness settlementExecuteBusiness;
 
-    @DisplayName("정산이 정상적으로 실행된다.")
+    @DisplayName("NORMAL 정산이 정상적으로 실행된다.")
     @Test
-    void execute_success() {
+    void execute_normal_success() {
         // given
         Long paymentId = 1L;
 
-        SettlementExecuteRequest request = new SettlementExecuteRequest(paymentId);
+        SettlementExecuteRequest request = SettlementExecuteRequest.builder()
+                .paymentId(paymentId)
+                .type(SettlementType.NORMAL)
+                .build();
+
         Payment payment = mock(Payment.class);
         Settlement settlement = mock(Settlement.class);
         SettlementExecuteResponse response = mock(SettlementExecuteResponse.class);
 
         when(paymentService.getByIdForUpdate(paymentId)).thenReturn(payment);
         when(payment.isPayable()).thenReturn(true);
-        when(settlementService.createOrGetSettlement(payment)).thenReturn(settlement);
+
+        when(settlementService.createOrGetSettlement(eq(payment), eq(SettlementType.NORMAL), isNull()))
+                .thenReturn(settlement);
+
         when(settlement.getStatus()).thenReturn(SettlementStatus.READY);
-        when(settlementPolicyService.calculate(settlement)).thenReturn(List.of());
+
+        List<SettlementItemResult> results = List.of(SettlementItemResult.builder().build());
+        when(settlementPolicyService.calculate(settlement)).thenReturn(results);
+
         when(settlementExecuteConverter.toResponse(settlement)).thenReturn(response);
 
         // when
         SettlementExecuteResponse result = settlementExecuteBusiness.execute(request);
 
         // then
-        verify(settlementService).createOrGetSettlement(payment);
+        verify(settlementService).createOrGetSettlement(eq(payment), eq(SettlementType.NORMAL), isNull());
         verify(settlementPolicyService).calculate(settlement);
-        verify(settlementService).createSettlementItems(eq(settlement), any());
+        verify(settlementService).createSettlementItems(settlement, results);
 
+        verify(settlement).changeStatus(SettlementStatus.IN_PROGRESS);
+        verify(settlement).changeStatus(SettlementStatus.COMPLETED);
+
+        verify(paymentService).settleIfNotSettled(payment.getId());
         assertThat(result).isEqualTo(response);
     }
 
@@ -75,7 +92,11 @@ public class SettlementExecuteBusinessTest {
     void execute_whenInvalidPaymentState_throwException() {
         // given
         Long paymentId = 1L;
-        SettlementExecuteRequest request = new SettlementExecuteRequest(paymentId);
+
+        SettlementExecuteRequest request = SettlementExecuteRequest.builder()
+                .paymentId(paymentId)
+                .type(SettlementType.NORMAL)
+                .build();
 
         Payment payment = mock(Payment.class);
 
@@ -83,8 +104,101 @@ public class SettlementExecuteBusinessTest {
         when(payment.isPayable()).thenReturn(false);
 
         // when & then
-        assertThatThrownBy(() ->
-                settlementExecuteBusiness.execute(request)
-        ).isInstanceOf(PaymentException.class);
+        assertThatThrownBy(() -> settlementExecuteBusiness.execute(request))
+                .isInstanceOf(PaymentException.class);
+
+        verify(settlementService, never()).createOrGetSettlement(any(), any(), any());
+        verify(settlementPolicyService, never()).calculate(any());
+    }
+
+    @DisplayName("이미 COMPLETED인 정산이면 멱등하게 반환하고 계산/저장을 수행하지 않는다.")
+    @Test
+    void execute_whenSettlementCompleted_returnIdempotent() {
+        // given
+        Long paymentId = 1L;
+
+        SettlementExecuteRequest request = SettlementExecuteRequest.builder()
+                .paymentId(paymentId)
+                .type(SettlementType.NORMAL)
+                .build();
+
+        Payment payment = mock(Payment.class);
+        Settlement settlement = mock(Settlement.class);
+        SettlementExecuteResponse response = mock(SettlementExecuteResponse.class);
+
+        when(paymentService.getByIdForUpdate(paymentId)).thenReturn(payment);
+        when(payment.isPayable()).thenReturn(true);
+
+        when(settlementService.createOrGetSettlement(eq(payment), eq(SettlementType.NORMAL), isNull()))
+                .thenReturn(settlement);
+
+        when(settlement.getStatus()).thenReturn(SettlementStatus.COMPLETED);
+        when(settlementExecuteConverter.toResponse(settlement)).thenReturn(response);
+
+        // when
+        SettlementExecuteResponse result = settlementExecuteBusiness.execute(request);
+
+        // then
+        verify(settlementPolicyService, never()).calculate(any());
+        verify(settlementService, never()).createSettlementItems(any(), any());
+        verify(paymentService, never()).settleIfNotSettled(anyLong());
+
+        assertThat(result).isEqualTo(response);
+    }
+
+    @DisplayName("REVERSAL 요청이면 원본 정산을 조회하고 payment+type 기준으로 멱등 생성한다.")
+    @Test
+    void execute_reversal_success_usingCalculate() {
+        // given
+        Long paymentId = 1L;
+        Long originalSettlementId = 10L;
+
+        SettlementExecuteRequest request = SettlementExecuteRequest.builder()
+                .paymentId(paymentId)
+                .type(SettlementType.REVERSAL)
+                .originalSettlementId(originalSettlementId)
+                .build();
+
+        Payment payment = mock(Payment.class);
+        Settlement original = mock(Settlement.class);
+        Settlement originalPaymentLink = mock(Settlement.class); // not used directly
+        Settlement settlement = mock(Settlement.class);
+        SettlementExecuteResponse response = mock(SettlementExecuteResponse.class);
+
+        when(paymentService.getByIdForUpdate(paymentId)).thenReturn(payment);
+        when(payment.isPayable()).thenReturn(true);
+
+        // original 조회
+        when(settlementService.getById(originalSettlementId)).thenReturn(original);
+        // original.payment.id == payment.id 검증을 통과시키기 위한 stubbing
+        Payment originalPayment = mock(Payment.class);
+        when(original.getPayment()).thenReturn(originalPayment);
+        when(originalPayment.getId()).thenReturn(paymentId);
+        when(payment.getId()).thenReturn(paymentId);
+
+        // type=REVERSAL, original 포함
+        when(settlementService.createOrGetSettlement(payment, SettlementType.REVERSAL, original))
+                .thenReturn(settlement);
+
+        when(settlement.getStatus()).thenReturn(SettlementStatus.READY);
+
+        List<SettlementItemResult> results = List.of(SettlementItemResult.builder().build());
+        when(settlementPolicyService.calculate(settlement)).thenReturn(results);
+
+        when(settlementExecuteConverter.toResponse(settlement)).thenReturn(response);
+
+        // when
+        SettlementExecuteResponse result = settlementExecuteBusiness.execute(request);
+
+        // then
+        verify(settlementService).getById(originalSettlementId);
+        verify(settlementService).createOrGetSettlement(payment, SettlementType.REVERSAL, original);
+
+        verify(settlementPolicyService).calculate(settlement);
+        verify(settlementService).createSettlementItems(settlement, results);
+
+        verify(paymentService, never()).settleIfNotSettled(anyLong());
+
+        assertThat(result).isEqualTo(response);
     }
 }
