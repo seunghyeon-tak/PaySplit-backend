@@ -80,4 +80,9 @@ public class SettlementService {
 
         settlementItemRepository.saveAll(items);
     }
+
+    public void prepareRetry(Settlement settlement) {
+        // 기존 아이템 제거(중복 방지)
+        settlementItemRepository.deleteBySettlementId(settlement.getId());
+    }
 }

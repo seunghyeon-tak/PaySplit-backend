@@ -43,8 +43,14 @@ public class SettlementExecuteBusiness {
         Settlement settlement = settlementService.createOrGetSettlement(payment);
 
         // 3. 이미 처리된/진행중이면 그대로 반환 (멱등)
-        if (settlement.getStatus() != SettlementStatus.READY) {
+        if (settlement.getStatus() == SettlementStatus.COMPLETED
+                || settlement.getStatus() == SettlementStatus.IN_PROGRESS) {
             return settlementExecuteConverter.toResponse(settlement);
+        }
+
+        // 재시도 허용 (items 삭제 후 실행)
+        if (settlement.getStatus() == SettlementStatus.FAILED) {
+            settlementService.prepareRetry(settlement);
         }
 
         try {
