@@ -126,12 +126,21 @@ public class SettlementPolicyService {
             BigDecimal value,
             BigDecimal totalAmount
     ) {
+        if (value == null) {
+            return BigDecimal.ZERO;
+        }
+
         if (type == FeeType.FIXED) {
-            // FIXED도 원 단위 강제
+            if (value.compareTo(BigDecimal.ZERO) < 0) {
+                throw new SettlementException(INVALID_DISTRIBUTION_AMOUNT);
+            }
             return value.setScale(MONEY_SCALE, MONEY_ROUNDING);
         }
 
-        // RATE
+        // RATE는 0~1 비율로 강제 (ex. 10% -> 0.10)
+        if (value.compareTo(BigDecimal.ZERO) < 0 || value.compareTo(BigDecimal.ONE) > 0) {
+            throw new SettlementException(INVALID_DISTRIBUTION_AMOUNT);
+        }
         return totalAmount
                 .multiply(value)
                 .setScale(MONEY_SCALE, MONEY_ROUNDING);
