@@ -39,9 +39,10 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
+    @Builder.Default
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
-    private PaymentMethod method;
+    private PaymentMethod method = PaymentMethod.CARD;
 
     @Column(name = "payer_id", nullable = false)
     private Long payerId;  // 결제 요청자
