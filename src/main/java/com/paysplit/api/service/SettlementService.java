@@ -14,6 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.paysplit.common.error.settlement.SettlementErrorCode.ALREADY_SETTLED_PAYMENT;
 import static com.paysplit.common.error.settlement.SettlementErrorCode.ORIGINAL_SETTLEMENT_NOT_FOUND;
@@ -100,5 +101,9 @@ public class SettlementService {
     public void prepareRetry(Settlement settlement) {
         // 기존 아이템 제거(중복 방지)
         settlementItemRepository.deleteBySettlementId(settlement.getId());
+    }
+
+    public Optional<Settlement> findByPaymentAndType(Payment payment, SettlementType type) {
+        return settlementRepository.findByPaymentAndType(payment, type);
     }
 }

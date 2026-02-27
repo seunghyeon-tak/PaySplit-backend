@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.paysplit.common.error.settlement.SettlementErrorCode.*;
 
@@ -38,12 +39,22 @@ public class SettlementExecuteBusiness {
     public SettlementExecuteResponse execute(SettlementExecuteRequest request) {
         // 1. 결제 정보 조회 (+ 비관락)
         Payment payment = paymentService.getByIdForUpdate(request.getPaymentId());
+        SettlementType type = request.getType();
+
+        Optional<Settlement> existing = settlementService.findByPaymentAndType(payment, type);
+
+        if (existing.isPresent()) {
+            Settlement s = existing.get();
+
+            if (s.getStatus() == SettlementStatus.COMPLETED || s.getStatus() == SettlementStatus.IN_PROGRESS) {
+                return settlementExecuteConverter.toResponse(s);
+            }
+        }
 
         if (!payment.isPayable()) {
             throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATE);
         }
 
-        SettlementType type = request.getType();
         if (type == null) {
             throw new SettlementException(INVALID_SETTLEMENT_TYPE_REQUEST);
         }
