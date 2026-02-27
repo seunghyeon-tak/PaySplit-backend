@@ -47,8 +47,9 @@ public class SettlementPolicy {
     @Column(name = "leader_share_value", precision = 10, scale = 2, nullable = false)
     private BigDecimal leaderShareValue;
 
+    @Builder.Default
     @Column(name = "active", nullable = false)
-    private boolean active;
+    private boolean active = true;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
