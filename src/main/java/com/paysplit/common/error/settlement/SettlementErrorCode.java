@@ -37,6 +37,29 @@ public enum SettlementErrorCode implements ErrorCode {
             "SETTLEMENT_006",
             "정산 금액 합계가 일치하지 않습니다",
             HttpStatus.INTERNAL_SERVER_ERROR
+    ),
+    ORIGINAL_SETTLEMENT_REQUIRED(
+            "SETTLEMENT_007",
+            "REVERSAL 또는 ADJUSTMENT 정산에는 원본 정산이 필요합니다",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    ORIGINAL_SETTLEMENT_NOT_FOUND(
+            "SETTLEMENT_008",
+            "원본 정산 정보를 찾을 수 없습니다",
+            HttpStatus.NOT_FOUND
+    ),
+
+    ORIGINAL_SETTLEMENT_PAYMENT_MISMATCH(
+            "SETTLEMENT_009",
+            "원본 정산의 결제 정보가 일치하지 않습니다",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    INVALID_SETTLEMENT_TYPE_REQUEST(
+            "SETTLEMENT_010",
+            "요청한 정산 타입이 올바르지 않습니다",
+            HttpStatus.BAD_REQUEST
     )
     ;
 

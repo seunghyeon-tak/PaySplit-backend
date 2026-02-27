@@ -3,12 +3,12 @@ package com.paysplit.api.business;
 import com.paysplit.api.dto.settlement.request.SettlementExecuteRequest;
 import com.paysplit.db.domain.Payment;
 import com.paysplit.db.domain.SettlementPolicy;
+import com.paysplit.db.enums.SettlementType;
 import com.paysplit.db.repository.PaymentRepository;
 import com.paysplit.db.repository.SettlementPolicyRepository;
 import com.paysplit.db.repository.SettlementRepository;
 import com.paysplit.support.PaymentFixture;
 import com.paysplit.support.SettlementPolicyFixture;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,18 +17,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import javax.sql.DataSource;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class SettlementExecuteConcurrencyTest {
+class SettlementExecuteConcurrencyTest {
+
     @Autowired
     private SettlementExecuteBusiness settlementExecuteBusiness;
 
@@ -42,12 +42,16 @@ public class SettlementExecuteConcurrencyTest {
     private SettlementRepository settlementRepository;
 
     @Test
-    @DisplayName("동시에 정산 요청이 들어와도 settlement는 하나만 생성된다.")
+    @DisplayName("동시에 NORMAL 정산 요청이 들어와도 payment+type 기준 settlement는 하나만 생성된다.")
     void concurrent_execute_test() throws Exception {
+        // given
         SettlementPolicy policy = settlementPolicyRepository.save(SettlementPolicyFixture.activePolicy());
         Payment payment = paymentRepository.save(PaymentFixture.completedPayment(policy));
 
-        SettlementExecuteRequest request = new SettlementExecuteRequest(payment.getId());
+        SettlementExecuteRequest request = SettlementExecuteRequest.builder()
+                .paymentId(payment.getId())
+                .type(SettlementType.NORMAL)
+                .build();
 
         int threadCount = 2;
 
@@ -58,7 +62,9 @@ public class SettlementExecuteConcurrencyTest {
             executor.submit(() -> {
                 try {
                     settlementExecuteBusiness.execute(request);
-                } catch (Exception e) {
+                } catch (Exception ignored) {
+                    // 멱등/락/유니크 충돌 상황에서 일부 스레드가 실패할 수도 있으니 무시
+                    // (원하면 여기서 예외 카운트 세서 "실패해도 최종 결과가 1개"만 검증해도 됨)
                 } finally {
                     latch.countDown();
                 }
@@ -66,9 +72,10 @@ public class SettlementExecuteConcurrencyTest {
         }
 
         latch.await();
+        executor.shutdown();
 
-        long count = settlementRepository.countByPayment(payment);
-
+        // then
+        long count = settlementRepository.countByPaymentAndType(payment, SettlementType.NORMAL);
         assertThat(count).isEqualTo(1);
     }
 }
