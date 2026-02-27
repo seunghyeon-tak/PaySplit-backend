@@ -1,0 +1,1 @@
+alter table payments add column pg_provider varchar(30) null comment 'PG사/결제 제공자 식별자' after payer_id;
