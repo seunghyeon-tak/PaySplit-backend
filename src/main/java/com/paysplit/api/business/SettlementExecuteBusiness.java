@@ -37,29 +37,26 @@ public class SettlementExecuteBusiness {
     private final SettlementExecuteConverter settlementExecuteConverter;
 
     public SettlementExecuteResponse execute(SettlementExecuteRequest request) {
-        // 1. 결제 정보 조회 (+ 비관락)
+        // 1) 결제 정보 조회 (+ 비관락)
         Payment payment = paymentService.getByIdForUpdate(request.getPaymentId());
+
         SettlementType type = request.getType();
 
+        // 2) 멱등 빠른 경로: 이미 COMPLETED/IN_PROGRESS면 즉시 반환
         Optional<Settlement> existing = settlementService.findByPaymentAndType(payment, type);
-
         if (existing.isPresent()) {
             Settlement s = existing.get();
-
             if (s.getStatus() == SettlementStatus.COMPLETED || s.getStatus() == SettlementStatus.IN_PROGRESS) {
                 return settlementExecuteConverter.toResponse(s);
             }
         }
 
-        if (!payment.isPayable()) {
+        // 3) NORMAL만 결제 유효성 검사
+        if (type == SettlementType.NORMAL && !payment.isPayable()) {
             throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATE);
         }
 
-        if (type == null) {
-            throw new SettlementException(INVALID_SETTLEMENT_TYPE_REQUEST);
-        }
-
-        // 2. Settlement 멱등 생성/조회
+        // 4) REVERSAL/ADJUSTMENT면 원본 정산 조회 + 검증
         Settlement original = null;
         if (type == SettlementType.REVERSAL || type == SettlementType.ADJUSTMENT) {
             if (request.getOriginalSettlementId() == null) {
@@ -68,38 +65,33 @@ public class SettlementExecuteBusiness {
 
             original = settlementService.getById(request.getOriginalSettlementId());
 
-            // 원본 정산과 결제 일치 검증
             if (original.getPayment() == null || original.getPayment().getId() == null
                     || !original.getPayment().getId().equals(payment.getId())) {
                 throw new SettlementException(ORIGINAL_SETTLEMENT_PAYMENT_MISMATCH);
             }
         }
 
-        // payment + type 기준 멱등 생성/조회
+        // 5) payment + type 기준 멱등 생성/조회
         Settlement settlement = settlementService.createOrGetSettlement(payment, type, original);
 
-        // 3. 이미 처리된/진행중이면 그대로 반환 (멱등)
+        // 6) 생성/조회 결과가 COMPLETED/IN_PROGRESS면 멱등 반환(동시성 안전망)
         if (settlement.getStatus() == SettlementStatus.COMPLETED
                 || settlement.getStatus() == SettlementStatus.IN_PROGRESS) {
             return settlementExecuteConverter.toResponse(settlement);
         }
 
-        // 재시도 허용 (items 삭제 후 실행)
+        // 7) FAILED면 재시도: 기존 items 제거
         if (settlement.getStatus() == SettlementStatus.FAILED) {
             settlementService.prepareRetry(settlement);
         }
 
         try {
-            // 4. 정산 시작
             settlement.changeStatus(SettlementStatus.IN_PROGRESS);
 
-            // 5. 정산 정책 적용 (금액 분배 계산)
             List<SettlementItemResult> results = settlementPolicyService.calculate(settlement);
 
-            // 6. SettlementItem 생성 및 저장
             settlementService.createSettlementItems(settlement, results);
 
-            // 7. 완료 처리
             settlement.changeStatus(SettlementStatus.COMPLETED);
 
             if (type == SettlementType.NORMAL) {

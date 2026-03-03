@@ -15,8 +15,12 @@ public enum PaymentErrorCode implements ErrorCode {
             "PAYMENT_002",
             "잘못된 결제 상태",
             HttpStatus.CONFLICT
-    )
-    ;
+    ),
+    ALREADY_SETTLED(
+            "PAYMENT_003",
+            "이미 정산이 완료된 결제입니다",
+            HttpStatus.CONFLICT
+    );
 
     private final String code;
     private final String message;

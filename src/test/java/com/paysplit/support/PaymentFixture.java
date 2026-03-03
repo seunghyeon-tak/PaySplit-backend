@@ -6,8 +6,10 @@ import com.paysplit.db.enums.PaymentMethod;
 import com.paysplit.db.enums.PaymentStatus;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public class PaymentFixture {
+
     public static Payment completedPayment(SettlementPolicy policy) {
         return Payment.builder()
                 .amount(new BigDecimal("10000"))
@@ -16,7 +18,7 @@ public class PaymentFixture {
                 .method(PaymentMethod.CARD)
                 .payerId(1L)
                 .currency("KRW")
-                .externalPaymentId("test-123")
+                .externalPaymentId(UUID.randomUUID().toString())
                 .build();
     }
 }

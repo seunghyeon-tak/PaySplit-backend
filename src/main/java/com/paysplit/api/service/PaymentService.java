@@ -25,13 +25,12 @@ public class PaymentService {
                 .orElseThrow(() -> new PaymentException(PAYMENT_NOT_FOUND));
     }
 
-    @Transactional
     public void settleIfNotSettled(Long paymentId) {
         int updated = paymentRepository.markSettledIfNotSettled(paymentId, LocalDateTime.now());
 
         if (updated == 0) {
             // 이미 정산됨
-            throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATE);
+            throw new PaymentException(PaymentErrorCode.ALREADY_SETTLED);
         }
     }
 }

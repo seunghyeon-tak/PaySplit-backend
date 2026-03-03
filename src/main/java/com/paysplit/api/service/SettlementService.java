@@ -16,8 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-import static com.paysplit.common.error.settlement.SettlementErrorCode.ALREADY_SETTLED_PAYMENT;
-import static com.paysplit.common.error.settlement.SettlementErrorCode.ORIGINAL_SETTLEMENT_NOT_FOUND;
+import static com.paysplit.common.error.settlement.SettlementErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +42,7 @@ public class SettlementService {
 
     public Settlement createSettlementInternal(Payment payment, SettlementType type, Settlement original) {
         if ((type == SettlementType.REVERSAL || type == SettlementType.ADJUSTMENT) && original == null) {
-            throw new SettlementException(ALREADY_SETTLED_PAYMENT);
+            throw new SettlementException(ORIGINAL_SETTLEMENT_REQUIRED);
         }
 
         // totalAmount 결정
