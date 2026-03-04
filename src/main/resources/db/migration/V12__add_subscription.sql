@@ -9,7 +9,7 @@ create table subscription_plans
     created_at  datetime       not null default current_timestamp,
 
     constraint fk_subscription_plans_policy foreign key (policy_id)
-        references settlement_policies (id) on delete restrict¬
+        references settlement_policies (id) on delete restrict
 );
 
 create table subscriptions
