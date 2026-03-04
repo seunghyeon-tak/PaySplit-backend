@@ -46,4 +46,12 @@ public class PartyMember {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public void leave() {
+        this.status = PartyMemberStatus.LEFT;
+    }
+
+    public void kick() {
+        this.status = PartyMemberStatus.KICKED;
+    }
 }

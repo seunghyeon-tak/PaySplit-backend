@@ -1,6 +1,5 @@
 package com.paysplit.db.domain;
 
-import com.paysplit.db.enums.PartyStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,39 +8,39 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "parties")
+@Table(name = "subscription_plans")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-public class Party {
+public class SubscriptionPlan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "leader_id", nullable = false)
-    private Long leaderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "policy_id", nullable = false)
+    private SettlementPolicy policy;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private PartyStatus status;
+    @Column(length = 50, nullable = false)
+    private String name;
 
-    @Column(name = "invite_code", length = 50, unique = true)
-    private String inviteCode;
+    @Column(precision = 10,scale = 2, nullable = false)
+    private BigDecimal price;
+
+    @Column(name = "max_members", nullable = false)
+    private int maxMembers;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active = true;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    public void disband() {
-        this.status = PartyStatus.DISBANDED;
-    }
-
-    public void activate() {
-        this.status = PartyStatus.ACTIVE;
-    }
 }
