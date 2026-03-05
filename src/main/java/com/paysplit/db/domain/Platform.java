@@ -8,37 +8,22 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "subscription_plans")
+@Table(name = "platforms")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-public class SubscriptionPlan {
+public class Platform {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "policy_id", nullable = false)
-    private SettlementPolicy policy;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "platform_id", nullable = false)
-    private Platform platform;
-
-    @Column(length = 50, nullable = false)
+    @Column(length = 50, nullable = false, unique = true)
     private String name;
-
-    @Column(precision = 10,scale = 2, nullable = false)
-    private BigDecimal price;
-
-    @Column(name = "max_members", nullable = false)
-    private int maxMembers;
 
     @Builder.Default
     @Column(nullable = false)
