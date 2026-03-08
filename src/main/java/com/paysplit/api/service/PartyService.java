@@ -1,0 +1,27 @@
+package com.paysplit.api.service;
+
+import com.paysplit.db.domain.Party;
+import com.paysplit.db.enums.PartyStatus;
+import com.paysplit.db.repository.PartyRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class PartyService {
+    private final PartyRepository partyRepository;
+
+    public Party createParty(Long userId, String code) {
+        Party party = Party.builder()
+                .leaderId(userId)
+                .status(PartyStatus.RECRUITING)
+                .inviteCode(code)
+                .build();
+
+        return partyRepository.save(party);
+    }
+
+    public boolean existInviteCode(String code) {
+        return partyRepository.existsByInviteCode(code);
+    }
+}
