@@ -29,8 +29,9 @@ public class PartyCreateBusiness {
     private final PartyCreateConverter partyCreateConverter;
 
     public PartyCreateResponse create(PartyCreateRequest request) {
-        // 요청한 사용자 존재 확인
         Long userId = request.getUserId();
+
+        // 요청한 사용자 존재 확인
         User user = userService.getById(userId);
 
         // 탈퇴한 유저인지 확인
