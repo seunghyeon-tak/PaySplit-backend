@@ -35,10 +35,10 @@ public class Subscription {
     @Column(length = 20, nullable = false)
     private SubscriptionStatus status;
 
-    @Column(name = "started_at", nullable = false)
+    @Column(name = "started_at")
     private LocalDateTime startedAt;
 
-    @Column(name = "ended_at", nullable = false)
+    @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
     @Builder.Default
@@ -48,6 +48,10 @@ public class Subscription {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public Long getPlanId() {
+        return plan.getId();
+    }
 
     public void expire() {
         this.status = SubscriptionStatus.EXPIRED;

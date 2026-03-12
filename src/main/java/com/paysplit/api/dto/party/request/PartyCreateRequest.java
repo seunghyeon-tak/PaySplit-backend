@@ -13,4 +13,7 @@ import lombok.NoArgsConstructor;
 public class PartyCreateRequest {
     @NotNull
     private Long userId;
+
+    @NotNull
+    private Long planId;
 }

@@ -39,6 +39,7 @@ public class Party {
 
     public void disband() {
         this.status = PartyStatus.DISBANDED;
+        this.inviteCode = null;
     }
 
     public void activate() {
