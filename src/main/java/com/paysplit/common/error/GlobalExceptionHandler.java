@@ -1,10 +1,10 @@
 package com.paysplit.common.error;
 
 import com.paysplit.api.response.ApiResponse;
-import com.paysplit.common.error.party.PartyErrorCode;
 import com.paysplit.common.error.party.PartyException;
 import com.paysplit.common.error.payment.PaymentException;
 import com.paysplit.common.error.settlement.SettlementException;
+import com.paysplit.common.error.subscriptionplan.SubscriptionPlanException;
 import com.paysplit.common.error.user.UserException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +15,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(SubscriptionPlanException.class)
+    public ResponseEntity<ApiResponse<?>> handlerSubscriptionPlanException(SubscriptionPlanException e) {
+        ErrorCode code = e.getErrorCode();
+
+        log.warn("SubscriptionPlanException : code={}, message={}", code.getCode(), code.getMessage(), e);
+
+        return ResponseEntity
+                .status(code.getStatus())
+                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+    }
+
     @ExceptionHandler(PartyException.class)
     public ResponseEntity<ApiResponse<?>> handlerPartyException(PartyException e) {
         ErrorCode code = e.getErrorCode();
 
-        log.warn("PartyException : code={}, message={}", code.getCode(), code.getMessage());
+        log.warn("PartyException : code={}, message={}", code.getCode(), code.getMessage(), e);
 
         return ResponseEntity
                 .status(code.getStatus())

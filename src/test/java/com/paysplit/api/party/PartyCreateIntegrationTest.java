@@ -5,14 +5,13 @@ import com.paysplit.api.business.PartyCreateBusiness;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
 import com.paysplit.common.error.user.UserErrorCode;
 import com.paysplit.common.error.user.UserException;
-import com.paysplit.db.domain.Party;
-import com.paysplit.db.domain.PartyMember;
-import com.paysplit.db.domain.User;
+import com.paysplit.db.domain.*;
 import com.paysplit.db.enums.PartyMemberStatus;
 import com.paysplit.db.enums.PartyStatus;
-import com.paysplit.db.repository.PartyMemberRepository;
-import com.paysplit.db.repository.PartyRepository;
-import com.paysplit.db.repository.UserRepository;
+import com.paysplit.db.repository.*;
+import com.paysplit.support.PlatformFixture;
+import com.paysplit.support.SettlementPolicyFixture;
+import com.paysplit.support.SubscriptionPlanFixture;
 import com.paysplit.support.UserFixture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,12 +38,28 @@ public class PartyCreateIntegrationTest {
     private PartyRepository partyRepository;
 
     @Autowired
+    private SettlementPolicyRepository settlementPolicyRepository;
+
+    @Autowired
+    private PlatformRepository platformRepository;
+
+    @Autowired
+    private SubscriptionPlanRepository subscriptionPlanRepository;
+
+    @Autowired
     private PartyMemberRepository partyMemberRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     @AfterEach
     void testDown() {
+        subscriptionRepository.deleteAll();
         partyMemberRepository.deleteAll();
         partyRepository.deleteAll();
+        subscriptionPlanRepository.deleteAll();
+        platformRepository.deleteAll();
+        settlementPolicyRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -53,9 +68,13 @@ public class PartyCreateIntegrationTest {
     void create_success_integration() {
         // given
         User user = userRepository.save(UserFixture.activeUser());
+        SettlementPolicy policy = settlementPolicyRepository.save(SettlementPolicyFixture.activePolicy());
+        Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
+        SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(user.getId())
+                .planId(plan.getId())
                 .build();
 
         // when
@@ -63,6 +82,7 @@ public class PartyCreateIntegrationTest {
 
         // then
         Party saveParty = partyRepository.findByLeaderId(user.getId()).orElseThrow();
+
 
         assertThat(saveParty).isNotNull();
         assertThat(saveParty.getStatus()).isEqualTo(PartyStatus.RECRUITING);
@@ -74,9 +94,13 @@ public class PartyCreateIntegrationTest {
     void create_success_leaderPartyMemberSaved() {
         // given
         User user = userRepository.save(UserFixture.activeUser());
+        SettlementPolicy policy = settlementPolicyRepository.save(SettlementPolicyFixture.activePolicy());
+        Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
+        SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(user.getId())
+                .planId(plan.getId())
                 .build();
 
         // when
@@ -96,9 +120,13 @@ public class PartyCreateIntegrationTest {
     void create_success_inviteCodeHasSize8UpperCase() {
         // given
         User user = userRepository.save(UserFixture.activeUser());
+        SettlementPolicy policy = settlementPolicyRepository.save(SettlementPolicyFixture.activePolicy());
+        Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
+        SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(user.getId())
+                .planId(plan.getId())
                 .build();
 
         // when
@@ -117,9 +145,13 @@ public class PartyCreateIntegrationTest {
     void create_exception_PartyCreateWithdrawnUser() {
         // given
         User user = userRepository.save(UserFixture.withdrawnUser());
+        SettlementPolicy policy = settlementPolicyRepository.save(SettlementPolicyFixture.activePolicy());
+        Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
+        SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(user.getId())
+                .planId(plan.getId())
                 .build();
 
         // when & then
@@ -138,6 +170,7 @@ public class PartyCreateIntegrationTest {
         // given
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(999L)
+                .planId(999L)
                 .build();
 
         // when & then

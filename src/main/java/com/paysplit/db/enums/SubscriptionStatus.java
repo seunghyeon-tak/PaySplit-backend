@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum SubscriptionStatus {
+    PENDING("대기 중"),
     ACTIVE("활성"),
     EXPIRED("만료"),
     CANCELED("취소"),

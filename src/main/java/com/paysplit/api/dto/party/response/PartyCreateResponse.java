@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PartyCreateResponse {
     private Long partyId;
+    private Long planId;
     private PartyStatus status;
     private String inviteCode;
 }

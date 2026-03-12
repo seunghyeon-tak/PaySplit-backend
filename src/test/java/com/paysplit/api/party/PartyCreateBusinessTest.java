@@ -4,14 +4,16 @@ import com.paysplit.api.business.PartyCreateBusiness;
 import com.paysplit.api.converter.PartyCreateConverter;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
 import com.paysplit.api.dto.party.response.PartyCreateResponse;
-import com.paysplit.api.service.PartyMemberService;
-import com.paysplit.api.service.PartyService;
-import com.paysplit.api.service.UserService;
+import com.paysplit.api.service.*;
 import com.paysplit.common.error.party.PartyErrorCode;
 import com.paysplit.common.error.party.PartyException;
+import com.paysplit.common.error.subscriptionplan.SubscriptionPlanErrorCode;
+import com.paysplit.common.error.subscriptionplan.SubscriptionPlanException;
 import com.paysplit.common.error.user.UserErrorCode;
 import com.paysplit.common.error.user.UserException;
 import com.paysplit.db.domain.Party;
+import com.paysplit.db.domain.Subscription;
+import com.paysplit.db.domain.SubscriptionPlan;
 import com.paysplit.db.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,12 @@ class PartyCreateBusinessTest {
     private PartyMemberService partyMemberService;
 
     @Mock
+    private SubscriptionPlanService subscriptionPlanService;
+
+    @Mock
+    private SubscriptionService subscriptionService;
+
+    @Mock
     private PartyCreateConverter partyCreateConverter;
 
     @InjectMocks
@@ -48,19 +56,25 @@ class PartyCreateBusinessTest {
     void create_party_success() {
         // given
         Long userId = 1L;
+        Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(userId)
+                .planId(planId)
                 .build();
 
         Party party = mock(Party.class);
         User user = mock(User.class);
+        SubscriptionPlan plan = mock(SubscriptionPlan.class);
+        Subscription subscription = mock(Subscription.class);
         PartyCreateResponse response = mock(PartyCreateResponse.class);
 
         when(userService.getById(userId)).thenReturn(user);
+        when(subscriptionPlanService.getById(planId)).thenReturn(plan);
         when(partyService.existInviteCode(any())).thenReturn(false);
         when(partyService.createParty(eq(userId), any(String.class))).thenReturn(party);
-        when(partyCreateConverter.toResponse(party)).thenReturn(response);
+        when(subscriptionService.createSubscription(plan, party)).thenReturn(subscription);
+        when(partyCreateConverter.toResponse(party, subscription)).thenReturn(response);
 
         // when
         PartyCreateResponse result = partyCreateBusiness.create(request);
@@ -70,6 +84,7 @@ class PartyCreateBusinessTest {
         ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
         verify(partyService).createParty(eq(userId), codeCaptor.capture());
         verify(partyMemberService).createPartyMember(party, user);
+        verify(subscriptionService).createSubscription(plan, party);
 
         String capturedCode = codeCaptor.getValue();
         assertThat(capturedCode).hasSize(8);
@@ -82,9 +97,11 @@ class PartyCreateBusinessTest {
     void create_party_whenGetById_throwException() {
         // given
         Long userId = 1L;
+        Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(userId)
+                .planId(planId)
                 .build();
 
         when(userService.getById(userId)).thenThrow(new UserException(UserErrorCode.USER_NOT_FOUND));
@@ -103,9 +120,11 @@ class PartyCreateBusinessTest {
     void create_party_whenWithdrawnUser_throwException() {
         // given
         Long userId = 1L;
+        Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(userId)
+                .planId(planId)
                 .build();
 
         User user = mock(User.class);
@@ -124,13 +143,43 @@ class PartyCreateBusinessTest {
     }
 
     @Test
+    @DisplayName("플랜 존재 확인시 구독 플랜 정보 찾을 수 없을때 SubscriptionException이 발생한다.")
+    void create_party_getById_throwException() {
+        // given
+        Long userId = 1L;
+        Long planId = 1L;
+
+        PartyCreateRequest request = PartyCreateRequest.builder()
+                .userId(userId)
+                .planId(planId)
+                .build();
+
+        User user = mock(User.class);
+
+        when(userService.getById(userId)).thenReturn(user);
+        when(subscriptionPlanService.getById(planId))
+                .thenThrow(new SubscriptionPlanException(SubscriptionPlanErrorCode.PLAN_NOT_FOUND));
+
+        // when & then
+        assertThatThrownBy(() -> partyCreateBusiness.create(request))
+                .isInstanceOf(SubscriptionPlanException.class)
+                .hasMessageContaining(SubscriptionPlanErrorCode.PLAN_NOT_FOUND.getMessage());
+
+        verify(partyService, never()).createParty(any(), any());
+        verify(subscriptionService, never()).createSubscription(any(), any());
+        verify(partyMemberService, never()).createPartyMember(any(), any());
+    }
+
+    @Test
     @DisplayName("초대코드 3회 충돌시 PartyException이 발생한다.")
     void create_party_generateUniqueInviteCode_throwException() {
         // given
         Long userId = 1L;
+        Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
                 .userId(userId)
+                .planId(planId)
                 .build();
 
         User user = mock(User.class);
