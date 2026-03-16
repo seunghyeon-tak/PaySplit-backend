@@ -1,4 +1,4 @@
-package com.paysplit.api.party;
+package com.paysplit.api.business.party;
 
 import com.paysplit.api.business.PartyCreateBusiness;
 import com.paysplit.api.converter.PartyCreateConverter;
