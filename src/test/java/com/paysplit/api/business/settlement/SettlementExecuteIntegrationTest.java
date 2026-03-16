@@ -1,6 +1,7 @@
-package com.paysplit.api.business;
+package com.paysplit.api.business.settlement;
 
 import com.paysplit.PaysplitApplication;
+import com.paysplit.api.business.SettlementExecuteBusiness;
 import com.paysplit.api.dto.settlement.request.SettlementExecuteRequest;
 import com.paysplit.db.domain.Payment;
 import com.paysplit.db.domain.Settlement;
