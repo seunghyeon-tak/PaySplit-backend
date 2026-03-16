@@ -11,6 +11,11 @@ public enum PartyErrorCode implements ErrorCode {
             "초대 코드 생성 실패",
             HttpStatus.BAD_REQUEST
     ),
+    PARTY_NOT_FOUND(
+            "PARTY_002",
+            "파티가 존재 하지 않습니다",
+            HttpStatus.NOT_FOUND
+    ),
     ;
     private final String code;
     private final String message;
