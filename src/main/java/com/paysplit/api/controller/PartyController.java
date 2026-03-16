@@ -3,12 +3,10 @@ package com.paysplit.api.controller;
 import com.paysplit.api.business.PartyCreateBusiness;
 import com.paysplit.api.business.PartyFindByCodeBusiness;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
-import com.paysplit.api.dto.party.request.PartyFindByCodeRequest;
 import com.paysplit.api.dto.party.response.PartyCreateResponse;
 import com.paysplit.api.dto.party.response.PartyFindByCodeResponse;
 import com.paysplit.api.response.ApiResponse;
 import jakarta.validation.Valid;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +25,8 @@ public class PartyController {
     }
 
     @GetMapping
-    public ApiResponse<PartyFindByCodeResponse> codeGetParties(@RequestParam PartyFindByCodeRequest request) {
-        PartyFindByCodeResponse response = partyFindByCodeBusiness.get(request);
+    public ApiResponse<PartyFindByCodeResponse> codeGetParties(@RequestParam String inviteCode) {
+        PartyFindByCodeResponse response = partyFindByCodeBusiness.get(inviteCode);
         return ApiResponse.success(response);
     }
 }

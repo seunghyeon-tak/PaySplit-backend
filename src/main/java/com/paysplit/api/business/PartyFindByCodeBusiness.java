@@ -1,7 +1,6 @@
 package com.paysplit.api.business;
 
 import com.paysplit.api.converter.PartyFindByCodeConverter;
-import com.paysplit.api.dto.party.request.PartyFindByCodeRequest;
 import com.paysplit.api.dto.party.response.PartyFindByCodeResponse;
 import com.paysplit.api.service.*;
 import com.paysplit.common.annotation.Business;
@@ -9,7 +8,6 @@ import com.paysplit.db.domain.Party;
 import com.paysplit.db.domain.Subscription;
 import com.paysplit.db.domain.SubscriptionPlan;
 import com.paysplit.db.domain.User;
-import com.paysplit.db.repository.PartyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +24,10 @@ public class PartyFindByCodeBusiness {
     private final PartyMemberService partyMemberService;
     private final PartyFindByCodeConverter partyFindByCodeConverter;
 
-    public PartyFindByCodeResponse get(PartyFindByCodeRequest request) {
+    public PartyFindByCodeResponse get(String inviteCode) {
         // 초대 코드로 파티 조회 (없으면 -> NOT FOUND)
         // 파티 상태 확인 (RECRUITING이 아니면 NOT FOUND)
-        Party party = partyService.getPartyByInviteCode(request.getInviteCode());
+        Party party = partyService.getPartyByInviteCode(inviteCode);
 
         // 구독 플랜 조회 (플랫폼 명, 최대 인원)
         Subscription subscription = subscriptionService.getByPartyId(party);
