@@ -1,5 +1,7 @@
 package com.paysplit.api.service;
 
+import com.paysplit.common.error.party.PartyErrorCode;
+import com.paysplit.common.error.party.PartyException;
 import com.paysplit.db.domain.Party;
 import com.paysplit.db.enums.PartyStatus;
 import com.paysplit.db.repository.PartyRepository;
@@ -23,5 +25,10 @@ public class PartyService {
 
     public boolean existInviteCode(String code) {
         return partyRepository.existsByInviteCode(code);
+    }
+
+    public Party getPartyByInviteCode(String inviteCode) {
+        return partyRepository.findByInviteCodeAndStatus(inviteCode, PartyStatus.RECRUITING)
+                .orElseThrow(() -> new PartyException(PartyErrorCode.PARTY_NOT_FOUND));
     }
 }

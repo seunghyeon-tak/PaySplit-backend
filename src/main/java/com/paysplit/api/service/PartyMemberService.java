@@ -22,4 +22,8 @@ public class PartyMemberService {
 
         return partyMemberRepository.save(partyMember);
     }
+
+    public int countActiveMembers(Long partyId) {
+        return partyMemberRepository.countByPartyIdAndStatus(partyId, PartyMemberStatus.ACTIVE);
+    }
 }
