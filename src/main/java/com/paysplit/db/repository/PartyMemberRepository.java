@@ -15,4 +15,14 @@ public interface PartyMemberRepository extends JpaRepository<PartyMember, Long> 
     Optional<PartyMember> findByPartyAndUser(Party party, User user);
 
     int countByPartyIdAndStatus(Long partyId, PartyMemberStatus status);
+
+    @Query("""
+        select count(pm) > 0
+        from PartyMember pm
+        join Subscription s on s.party.id = pm.party.id
+        where pm.user.id = :userId
+            and s.plan.id = :planId
+            and pm.status = :status
+        """)
+    boolean existsActiveByUserIdAndPlanId(@Param("userId") Long userId, @Param("planId") Long planId, @Param("status") PartyMemberStatus status);
 }
