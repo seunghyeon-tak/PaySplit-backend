@@ -1,5 +1,6 @@
 package com.paysplit.api.dto.party.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,9 +12,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class PartyCreateRequest {
+    @Schema(name = "user_id", description = "유저 ID", example = "1")
     @NotNull
     private Long userId;
 
+    @Schema(name = "plan_id", description = "구독 플랜 ID", example = "1")
     @NotNull
     private Long planId;
 }
