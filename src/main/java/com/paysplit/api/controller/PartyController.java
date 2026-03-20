@@ -1,18 +1,24 @@
 package com.paysplit.api.controller;
 
-import com.paysplit.api.business.PartyInviteJoinBusiness;
 import com.paysplit.api.business.PartyCreateBusiness;
 import com.paysplit.api.business.PartyFindByCodeBusiness;
+import com.paysplit.api.business.PartyInviteJoinBusiness;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
 import com.paysplit.api.dto.party.request.PartyJoinRequest;
 import com.paysplit.api.dto.party.response.PartyCreateResponse;
 import com.paysplit.api.dto.party.response.PartyFindByCodeResponse;
 import com.paysplit.api.dto.party.response.PartyJoinResponse;
-import com.paysplit.api.response.ApiResponse;
+import com.paysplit.api.response.ApiResult;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Party", description = "파티 관련 API")
 @RestController
 @RequestMapping("/api/v1/parties")
 @RequiredArgsConstructor
@@ -21,22 +27,295 @@ public class PartyController {
     private final PartyFindByCodeBusiness partyFindByCodeBusiness;
     private final PartyInviteJoinBusiness partyInviteJoinBusiness;
 
+    @Operation(
+            summary = "파티 생성",
+            description = "새로운 파티를 생성합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "성공"),
+                    @ApiResponse(responseCode = "404", description = "NOT_FOUND",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "USER_001",
+                                                    summary = "이미 가입 했습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "USER_001",
+                                                                "messsage": "이미 가입 했습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PLAN_001",
+                                                    summary = "구독 플랜 정보를 찾을 수 없습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PLAN_001",
+                                                                "messsage": "구독 플랜 정보를 찾을 수 없습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            )
+                                    }
+                            )
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD_REQUEST",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "USER_002",
+                                                    summary = "이미 탈퇴한 사용자 입니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "USER_002",
+                                                                "messsage": "이미 탈퇴한 사용자 입니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PLAN_002",
+                                                    summary = "비활성화된 구독 플랜입니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PLAN_002",
+                                                                "messsage": "비활성화된 구독 플랜입니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PARTY_001",
+                                                    summary = "초대 코드 생성 실패",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PARTY_001",
+                                                                "messsage": "초대 코드 생성 실패",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            )
+                                    }
+                            )
+                    )
+            }
+    )
     @PostMapping
-    public ApiResponse<PartyCreateResponse> create(@Valid @RequestBody PartyCreateRequest request) {
+    public ApiResult<PartyCreateResponse> create(@Valid @RequestBody PartyCreateRequest request) {
         PartyCreateResponse response = partyCreateBusiness.create(request);
-
-        return ApiResponse.success(response);
+        return ApiResult.success(response);
     }
 
+    @Operation(
+            summary = "파티코드 조회",
+            description = "초대코드로 파티 조회",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "성공"),
+                    @ApiResponse(responseCode = "404", description = "NOT_FOUND",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "PARTY_002",
+                                                    summary = "파티가 존재 하지 않습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PARTY_002",
+                                                                "messsage": "파티가 존재 하지 않습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "SUBSCRIPTION_001",
+                                                    summary = "구독이 존재하지 않습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "SUBSCRIPTION_001",
+                                                                "messsage": "구독이 존재하지 않습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PLAN_001",
+                                                    summary = "구독 플랜 정보를 찾을 수 없습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PLAN_001",
+                                                                "messsage": "구독 플랜 정보를 찾을 수 없습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "USER_001",
+                                                    summary = "사용자 정보를 찾을 수 없습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "USER_001",
+                                                                "messsage": "사용자 정보를 찾을 수 없습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD_REQUEST",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "PLAN_002",
+                                                    summary = "비활성화된 구독 플랜입니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PLAN_002",
+                                                                "messsage": "비활성화된 구독 플랜입니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    )
+            }
+    )
     @GetMapping
-    public ApiResponse<PartyFindByCodeResponse> codeGetParties(@RequestParam String inviteCode) {
+    public ApiResult<PartyFindByCodeResponse> codeGetParties(@RequestParam String inviteCode) {
         PartyFindByCodeResponse response = partyFindByCodeBusiness.get(inviteCode);
-        return ApiResponse.success(response);
+        return ApiResult.success(response);
     }
 
+    @Operation(
+            summary = "파티 코드로 파티 참여",
+            description = "초대코드로 파티 참여",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "성공"),
+                    @ApiResponse(responseCode = "400", description = "BAD_REQUEST",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "USER_002",
+                                                    summary = "이미 탈퇴한 사용자 입니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "USER_002",
+                                                                "messsage": "이미 탈퇴한 사용자 입니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PARTY_003",
+                                                    summary = "파티멤버가 가득 찼습니다.",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PARTY_003",
+                                                                "messsage": "파티멤버가 가득 찼습니다.",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    ),
+                    @ApiResponse(responseCode = "404", description = "NOT_FOUND",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "USER_001",
+                                                    summary = "사용자 정보를 찾을 수 없습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "USER_001",
+                                                                "messsage": "사용자 정보를 찾을 수 없습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PARTY_002",
+                                                    summary = "파티가 존재 하지 않습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PARTY_002",
+                                                                "messsage": "파티가 존재 하지 않습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "SUBSCRIPTION_001",
+                                                    summary = "구독이 존재하지 않습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "SUBSCRIPTION_001",
+                                                                "messsage": "구독이 존재하지 않습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PLAN_001",
+                                                    summary = "구독 플랜 정보를 찾을 수 없습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PLAN_001",
+                                                                "messsage": "구독 플랜 정보를 찾을 수 없습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    ),
+                    @ApiResponse(responseCode = "409", description = "CONFLICT",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "PARTY_004",
+                                                    summary = "이미 가입 했습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PARTY_004",
+                                                                "messsage": "이미 가입 했습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    ),
+            }
+    )
     @PostMapping("/join")
-    public ApiResponse<PartyJoinResponse> joinPartyMember(@RequestParam String inviteCode, @Valid @RequestBody PartyJoinRequest request) {
+    public ApiResult<PartyJoinResponse> joinPartyMember(@RequestParam String inviteCode, @Valid @RequestBody PartyJoinRequest request) {
         PartyJoinResponse response = partyInviteJoinBusiness.join(inviteCode, request);
-        return ApiResponse.success(response);
+        return ApiResult.success(response);
     }
 }

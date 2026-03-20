@@ -18,12 +18,12 @@ public enum PartyErrorCode implements ErrorCode {
     ),
     PARTY_MEMBER_FULL(
             "PARTY_003",
-            "파티멤버가 가득 찼습니다.",
+            "파티멤버가 가득 찼습니다",
             HttpStatus.BAD_REQUEST
     ),
     ALREADY_JOINED(
             "PARTY_004",
-            "이미 가입 했습니다.",
+            "이미 가입 했습니다",
             HttpStatus.CONFLICT
     ),
     ;

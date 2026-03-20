@@ -14,7 +14,7 @@ public enum UserErrorCode implements ErrorCode {
     ),
     LEFT_USER(
             "USER_002",
-            "이미 탈퇴한 사용자 입니다.",
+            "이미 탈퇴한 사용자 입니다",
             HttpStatus.BAD_REQUEST
     ),
     ;

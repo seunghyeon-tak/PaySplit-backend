@@ -1,6 +1,6 @@
 package com.paysplit.common.error;
 
-import com.paysplit.api.response.ApiResponse;
+import com.paysplit.api.response.ApiResult;
 import com.paysplit.common.error.party.PartyException;
 import com.paysplit.common.error.payment.PaymentException;
 import com.paysplit.common.error.settlement.SettlementException;
@@ -17,79 +17,79 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(SubscriptionException.class)
-    public ResponseEntity<ApiResponse<?>> handlerSubscriptionException(SubscriptionException e) {
+    public ResponseEntity<ApiResult<?>> handlerSubscriptionException(SubscriptionException e) {
         ErrorCode code = e.getErrorCode();
 
         log.warn("SubscriptionException : code={}, message={}", code.getCode(), code.getMessage(), e);
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(SubscriptionPlanException.class)
-    public ResponseEntity<ApiResponse<?>> handlerSubscriptionPlanException(SubscriptionPlanException e) {
+    public ResponseEntity<ApiResult<?>> handlerSubscriptionPlanException(SubscriptionPlanException e) {
         ErrorCode code = e.getErrorCode();
 
         log.warn("SubscriptionPlanException : code={}, message={}", code.getCode(), code.getMessage(), e);
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(PartyException.class)
-    public ResponseEntity<ApiResponse<?>> handlerPartyException(PartyException e) {
+    public ResponseEntity<ApiResult<?>> handlerPartyException(PartyException e) {
         ErrorCode code = e.getErrorCode();
 
         log.warn("PartyException : code={}, message={}", code.getCode(), code.getMessage(), e);
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(UserException.class)
-    public ResponseEntity<ApiResponse<?>> handlerUserException(UserException e) {
+    public ResponseEntity<ApiResult<?>> handlerUserException(UserException e) {
         ErrorCode code = e.getErrorCode();
 
         log.warn("UserException : code={}, message={}", code.getCode(), code.getMessage(), e);
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(SettlementException.class)
-    public ResponseEntity<ApiResponse<?>> handlerSettlementException(SettlementException e) {
+    public ResponseEntity<ApiResult<?>> handlerSettlementException(SettlementException e) {
         ErrorCode code = e.getErrorCode();
 
         log.warn("SettlementException : code={}, message={}", code.getCode(), code.getMessage(), e);
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(PaymentException.class)
-    public ResponseEntity<ApiResponse<?>> handlerPaymentException(PaymentException e) {
+    public ResponseEntity<ApiResult<?>> handlerPaymentException(PaymentException e) {
         ErrorCode code = e.getErrorCode();
 
         log.warn("PaymentException : code={}, message={}", code.getCode(), code.getMessage(), e);
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handlerException(Exception e) {
+    public ResponseEntity<ApiResult<?>> handlerException(Exception e) {
         CommonErrorCode code = CommonErrorCode.INTERNAL_SERVER_ERROR;
 
         log.error("Unhandled exception", e);
 
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.getCode(), code.getMessage(), null));
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
     }
 }
