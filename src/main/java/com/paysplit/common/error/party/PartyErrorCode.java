@@ -16,6 +16,16 @@ public enum PartyErrorCode implements ErrorCode {
             "파티가 존재 하지 않습니다",
             HttpStatus.NOT_FOUND
     ),
+    PARTY_MEMBER_FULL(
+            "PARTY_003",
+            "파티멤버가 가득 찼습니다.",
+            HttpStatus.BAD_REQUEST
+    ),
+    ALREADY_JOINED(
+            "PARTY_004",
+            "이미 가입 했습니다.",
+            HttpStatus.CONFLICT
+    ),
     ;
     private final String code;
     private final String message;

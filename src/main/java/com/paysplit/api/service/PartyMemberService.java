@@ -1,5 +1,7 @@
 package com.paysplit.api.service;
 
+import com.paysplit.common.error.party.PartyErrorCode;
+import com.paysplit.common.error.party.PartyException;
 import com.paysplit.db.domain.Party;
 import com.paysplit.db.domain.PartyMember;
 import com.paysplit.db.domain.User;
@@ -25,5 +27,17 @@ public class PartyMemberService {
 
     public int countActiveMembers(Long partyId) {
         return partyMemberRepository.countByPartyIdAndStatus(partyId, PartyMemberStatus.ACTIVE);
+    }
+
+    public void validatePartyNotFull(int currentMember, int partyMax) {
+        if (currentMember == partyMax) {
+            throw new PartyException(PartyErrorCode.PARTY_MEMBER_FULL);
+        }
+    }
+
+    public void validateNotAlreadyJoined(Long userId, Long planId) {
+        if (partyMemberRepository.existsActiveByUserIdAndPlanId(userId, planId, PartyMemberStatus.ACTIVE)) {
+            throw new PartyException(PartyErrorCode.ALREADY_JOINED);
+        }
     }
 }
