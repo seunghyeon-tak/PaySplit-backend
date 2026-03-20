@@ -43,3 +43,7 @@ application.yaml
 .env
 .env.*
 !.env.example
+
+### logs ###
+logs/
+*.log
