@@ -12,6 +12,13 @@ public class UserFixture {
                 .build();
     }
 
+    public static User partyMemberUser() {
+        return User.builder()
+                .name("tester99")
+                .email("tester99@test.com")
+                .build();
+    }
+
     public static User withdrawnUser() {
         return User.builder()
                 .name("withdrawn01")
