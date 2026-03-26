@@ -1,10 +1,13 @@
 package com.paysplit.api.controller;
 
+import com.paysplit.api.business.PartyAutoMatchBusiness;
 import com.paysplit.api.business.PartyCreateBusiness;
 import com.paysplit.api.business.PartyFindByCodeBusiness;
 import com.paysplit.api.business.PartyInviteJoinBusiness;
+import com.paysplit.api.dto.party.request.PartyAutoMatchRequest;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
 import com.paysplit.api.dto.party.request.PartyJoinRequest;
+import com.paysplit.api.dto.party.response.PartyAutoMatchResponse;
 import com.paysplit.api.dto.party.response.PartyCreateResponse;
 import com.paysplit.api.dto.party.response.PartyFindByCodeResponse;
 import com.paysplit.api.dto.party.response.PartyJoinResponse;
@@ -26,6 +29,7 @@ public class PartyController {
     private final PartyCreateBusiness partyCreateBusiness;
     private final PartyFindByCodeBusiness partyFindByCodeBusiness;
     private final PartyInviteJoinBusiness partyInviteJoinBusiness;
+    private final PartyAutoMatchBusiness partyAutoJoinBusiness;
 
     @Operation(
             summary = "파티 생성",
@@ -130,7 +134,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "PARTY_002",
-                                                                "messsage": "파티가 존재 하지 않습니다",
+                                                                "message": "파티가 존재 하지 않습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -142,7 +146,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "SUBSCRIPTION_001",
-                                                                "messsage": "구독이 존재하지 않습니다",
+                                                                "message": "구독이 존재하지 않습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -154,7 +158,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "PLAN_001",
-                                                                "messsage": "구독 플랜 정보를 찾을 수 없습니다",
+                                                                "message": "구독 플랜 정보를 찾을 수 없습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -166,7 +170,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "USER_001",
-                                                                "messsage": "사용자 정보를 찾을 수 없습니다",
+                                                                "message": "사용자 정보를 찾을 수 없습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -185,7 +189,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "PLAN_002",
-                                                                "messsage": "비활성화된 구독 플랜입니다",
+                                                                "message": "비활성화된 구독 플랜입니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -217,7 +221,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "USER_002",
-                                                                "messsage": "이미 탈퇴한 사용자 입니다",
+                                                                "message": "이미 탈퇴한 사용자 입니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -229,7 +233,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "PARTY_003",
-                                                                "messsage": "파티멤버가 가득 찼습니다.",
+                                                                "message": "파티멤버가 가득 찼습니다.",
                                                                 "data": null
                                                             }
                                                             """
@@ -248,7 +252,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "USER_001",
-                                                                "messsage": "사용자 정보를 찾을 수 없습니다",
+                                                                "message": "사용자 정보를 찾을 수 없습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -260,7 +264,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "PARTY_002",
-                                                                "messsage": "파티가 존재 하지 않습니다",
+                                                                "message": "파티가 존재 하지 않습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -272,7 +276,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "SUBSCRIPTION_001",
-                                                                "messsage": "구독이 존재하지 않습니다",
+                                                                "message": "구독이 존재하지 않습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -284,7 +288,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "PLAN_001",
-                                                                "messsage": "구독 플랜 정보를 찾을 수 없습니다",
+                                                                "message": "구독 플랜 정보를 찾을 수 없습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -303,7 +307,7 @@ public class PartyController {
                                                             {
                                                                 "success": false,
                                                                 "code": "PARTY_004",
-                                                                "messsage": "이미 가입 했습니다",
+                                                                "message": "이미 가입 했습니다",
                                                                 "data": null
                                                             }
                                                             """
@@ -316,6 +320,100 @@ public class PartyController {
     @PostMapping("/join")
     public ApiResult<PartyJoinResponse> joinPartyMember(@RequestParam String inviteCode, @Valid @RequestBody PartyJoinRequest request) {
         PartyJoinResponse response = partyInviteJoinBusiness.join(inviteCode, request);
+        return ApiResult.success(response);
+    }
+
+    @Operation(
+            summary = "파티 자동 매칭",
+            description = "파티 자동 매칭",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "성공"),
+                    @ApiResponse(responseCode = "400", description = "BAD_REQUEST",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "USER_002",
+                                                    summary = "이미 탈퇴한 사용자 입니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "USER_002",
+                                                                "message": "이미 탈퇴한 사용자 입니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PLAN_002",
+                                                    summary = "비활성화된 구독 플랜입니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PLAN_002",
+                                                                "message": "비활성화된 구독 플랜입니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    ),
+                    @ApiResponse(responseCode = "404", description = "NOT_FOUND",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "USER_001",
+                                                    summary = "사용자 정보를 찾을 수 없습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "USER_001",
+                                                                "message": "사용자 정보를 찾을 수 없습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "PLAN_001",
+                                                    summary = "구독 플랜 정보를 찾을 수 없습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PLAN_001",
+                                                                "message": "구독 플랜 정보를 찾을 수 없습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    ),
+                    @ApiResponse(responseCode = "409", description = "CONFLICT",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "PARTY_004",
+                                                    summary = "이미 가입 했습니다",
+                                                    value = """
+                                                            {
+                                                                "success": false,
+                                                                "code": "PARTY_004",
+                                                                "message": "이미 가입 했습니다",
+                                                                "data": null
+                                                            }
+                                                            """
+                                            ),
+                                    }
+                            )
+                    ),
+            }
+    )
+    @PostMapping("/auto")
+    public ApiResult<PartyAutoMatchResponse> autoPartyMember(@Valid @RequestBody PartyAutoMatchRequest request) {
+        PartyAutoMatchResponse response = partyAutoJoinBusiness.auto(request);
         return ApiResult.success(response);
     }
 }

@@ -7,7 +7,6 @@ import com.paysplit.db.domain.Subscription;
 import lombok.RequiredArgsConstructor;
 
 @Converter
-@RequiredArgsConstructor
 public class PartyCreateConverter {
     public PartyCreateResponse toResponse(Party party, Subscription subscription) {
         return PartyCreateResponse.builder()

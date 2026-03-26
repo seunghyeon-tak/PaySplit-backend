@@ -12,5 +12,39 @@ services:
     volumes:
       - pay-split-mysql:/var/lib/mysql
 
+  redis:
+    image: redis:7.0
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  loki:
+    image: grafana/loki:2.9.0
+    restart: always
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    entrypoint: /usr/bin/loki
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+
 volumes:
   pay-split-mysql:
+  redis-data:
+  loki-data:
+  grafana-data:

@@ -6,7 +6,6 @@ import com.paysplit.db.domain.Party;
 import lombok.RequiredArgsConstructor;
 
 @Converter
-@RequiredArgsConstructor
 public class PartyFindByCodeConverter {
     public PartyFindByCodeResponse toResponse(
             Party party, String platformName, String leaderName, int currentMembers, int maxMembers

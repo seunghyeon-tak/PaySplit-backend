@@ -11,6 +11,11 @@ public enum SubscriptionErrorCode implements ErrorCode {
             "구독이 존재하지 않습니다",
             HttpStatus.NOT_FOUND
     ),
+    ALREADY_SAME_PLAN(
+            "SUBSCRIPTION_002",
+            "이미 사용중인 구독 입니다",
+            HttpStatus.CONFLICT
+    ),
     ;
 
     private final String code;

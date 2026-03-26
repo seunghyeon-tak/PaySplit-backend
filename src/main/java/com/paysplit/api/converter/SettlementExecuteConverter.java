@@ -6,7 +6,6 @@ import com.paysplit.db.domain.Settlement;
 import lombok.RequiredArgsConstructor;
 
 @Converter
-@RequiredArgsConstructor
 public class SettlementExecuteConverter {
     public SettlementExecuteResponse toResponse(Settlement settlement) {
         return SettlementExecuteResponse.builder()
