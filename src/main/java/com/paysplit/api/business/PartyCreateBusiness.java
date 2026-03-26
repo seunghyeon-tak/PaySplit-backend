@@ -23,6 +23,7 @@ public class PartyCreateBusiness {
     private final UserService userService;
     private final PartyMemberService partyMemberService;
     private final PartyCreateConverter partyCreateConverter;
+    private final WaitingQueueService waitingQueueService;
     private final SubscriptionPlanService subscriptionPlanService;
     private final SubscriptionService subscriptionService;
 
@@ -50,6 +51,24 @@ public class PartyCreateBusiness {
 
         // 파티장을 PartyMember로 추가 (status = active)
         partyMemberService.createPartyMember(party, user);
+
+        // 파티 생성자가 대기 큐에 있으면 제거
+        if (waitingQueueService.isInWaitingQueue(planId, userId)) {
+            waitingQueueService.removeFromWaitingQueue(planId, userId);
+        }
+
+        // 대기 큐에서 정원 찰 때까지 유저 추가
+        Long queueSize = waitingQueueService.getWaitingQueueSize(planId);
+        int currentMembers = partyMemberService.countActiveMembers(party.getId());
+
+        while (queueSize > 0 && currentMembers < plan.getMaxMembers()) {
+            String waitingUserId = waitingQueueService.popFromWaitingQueue(planId);
+            User waitingUser = userService.getById(Long.parseLong(waitingUserId));
+            partyMemberService.createPartyMember(party, waitingUser);
+            log.info("자동 매칭 완료 - partyId : {}, userId : {}", party.getId(), waitingUserId);
+            currentMembers++;
+            queueSize--;
+        }
 
         // 생성된 파티 정보 반환
         return partyCreateConverter.toResponse(party, subscription);

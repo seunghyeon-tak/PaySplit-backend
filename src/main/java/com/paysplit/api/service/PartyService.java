@@ -8,6 +8,8 @@ import com.paysplit.db.repository.PartyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class PartyService {
@@ -30,5 +32,9 @@ public class PartyService {
     public Party getPartyByInviteCode(String inviteCode) {
         return partyRepository.findByInviteCodeAndStatus(inviteCode, PartyStatus.RECRUITING)
                 .orElseThrow(() -> new PartyException(PartyErrorCode.PARTY_NOT_FOUND));
+    }
+
+    public Optional<Party> findAvailableParty(Long planId) {
+        return partyRepository.findAvailableParty(planId);
     }
 }
