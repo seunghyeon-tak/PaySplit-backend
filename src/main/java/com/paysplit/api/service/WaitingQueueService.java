@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +36,13 @@ public class WaitingQueueService {
     public void removeFromWaitingQueue(Long planId, Long userId) {
         // 대기 중인 유저가 파티 생성 시 대기 큐 제거
         redisTemplate.opsForList().remove("waiting:" + planId, 1, String.valueOf(userId));
+    }
+
+    public void clearWaitingQueue() {
+        Set<String> keys = redisTemplate.keys("waiting:*");
+        if (keys != null) {
+            redisTemplate.delete(keys);
+        }
     }
 
 }

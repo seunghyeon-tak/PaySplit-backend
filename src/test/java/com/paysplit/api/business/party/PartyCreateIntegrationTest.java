@@ -3,6 +3,7 @@ package com.paysplit.api.business.party;
 import com.paysplit.PaysplitApplication;
 import com.paysplit.api.business.PartyCreateBusiness;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
+import com.paysplit.api.service.WaitingQueueService;
 import com.paysplit.common.error.user.UserErrorCode;
 import com.paysplit.common.error.user.UserException;
 import com.paysplit.db.domain.*;
@@ -52,8 +53,12 @@ public class PartyCreateIntegrationTest {
     @Autowired
     private SubscriptionRepository subscriptionRepository;
 
+    @Autowired
+    private WaitingQueueService waitingQueueService;
+
     @AfterEach
     void testDown() {
+        waitingQueueService.clearWaitingQueue();
         subscriptionRepository.deleteAll();
         partyMemberRepository.deleteAll();
         partyRepository.deleteAll();
@@ -64,12 +69,37 @@ public class PartyCreateIntegrationTest {
     }
 
     @Test
+    @DisplayName("파티 생성 시 대기 큐에 있는 유저가 자동으로 파티 멤버로 추가된다.")
+    void create_success_waitingQueueUserAutoMatched() {
+        // given
+        User leaderUser = userRepository.save(UserFixture.activeUser());
+        User waitingUser = userRepository.save(UserFixture.partyMemberUser());
+        SettlementPolicy policy = settlementPolicyRepository.save(SettlementPolicyFixture.activePolicy());
+        Platform platform = platformRepository.save(PlatformFixture.activePlatform());
+        SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
+
+        waitingQueueService.addToWaitingQueue(plan.getId(), waitingUser.getId());
+
+        PartyCreateRequest request = PartyCreateRequest.builder()
+                .userId(leaderUser.getId())
+                .planId(plan.getId())
+                .build();
+
+        // when
+        partyCreateBusiness.create(request);
+
+        // then
+        Party party = partyRepository.findByLeaderId(leaderUser.getId()).orElseThrow();
+        assertThat(partyMemberRepository.countByPartyIdAndStatus(party.getId(), PartyMemberStatus.ACTIVE)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("파티 생성 시 DB에 파티가 저장된다.")
     void create_success_integration() {
         // given
         User user = userRepository.save(UserFixture.activeUser());
         SettlementPolicy policy = settlementPolicyRepository.save(SettlementPolicyFixture.activePolicy());
-        Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
+        Platform platform = platformRepository.save(PlatformFixture.activePlatform());
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
         PartyCreateRequest request = PartyCreateRequest.builder()
