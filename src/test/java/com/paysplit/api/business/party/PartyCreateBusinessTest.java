@@ -48,6 +48,9 @@ class PartyCreateBusinessTest {
     @Mock
     private PartyCreateConverter partyCreateConverter;
 
+    @Mock
+    private WaitingQueueService waitingQueueService;
+
     @InjectMocks
     private PartyCreateBusiness partyCreateBusiness;
 
@@ -74,6 +77,8 @@ class PartyCreateBusinessTest {
         when(partyService.existInviteCode(any())).thenReturn(false);
         when(partyService.createParty(eq(userId), any(String.class))).thenReturn(party);
         when(subscriptionService.createSubscription(plan, party)).thenReturn(subscription);
+        when(waitingQueueService.isInWaitingQueue(any(), any())).thenReturn(false);
+        when(waitingQueueService.getWaitingQueueSize(any())).thenReturn(0L);
         when(partyCreateConverter.toResponse(party, subscription)).thenReturn(response);
 
         // when
@@ -85,6 +90,7 @@ class PartyCreateBusinessTest {
         verify(partyService).createParty(eq(userId), codeCaptor.capture());
         verify(partyMemberService).createPartyMember(party, user);
         verify(subscriptionService).createSubscription(plan, party);
+        verify(waitingQueueService).isInWaitingQueue(planId, userId);
 
         String capturedCode = codeCaptor.getValue();
         assertThat(capturedCode).hasSize(8);

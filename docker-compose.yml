@@ -12,6 +12,14 @@ services:
     volumes:
       - pay-split-mysql:/var/lib/mysql
 
+  redis:
+    image: redis:7.0
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
   loki:
     image: grafana/loki:2.9.0
     restart: always
@@ -37,5 +45,6 @@ services:
 
 volumes:
   pay-split-mysql:
+  redis-data:
   loki-data:
   grafana-data:
