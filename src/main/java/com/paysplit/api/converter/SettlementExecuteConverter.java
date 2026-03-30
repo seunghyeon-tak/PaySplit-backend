@@ -3,7 +3,6 @@ package com.paysplit.api.converter;
 import com.paysplit.api.dto.settlement.response.SettlementExecuteResponse;
 import com.paysplit.common.annotation.Converter;
 import com.paysplit.db.domain.Settlement;
-import lombok.RequiredArgsConstructor;
 
 @Converter
 public class SettlementExecuteConverter {
