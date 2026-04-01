@@ -7,6 +7,7 @@ import com.paysplit.common.error.settlement.SettlementException;
 import com.paysplit.common.error.subscription.SubscriptionException;
 import com.paysplit.common.error.subscriptionplan.SubscriptionPlanException;
 import com.paysplit.common.error.user.UserException;
+import com.paysplit.common.error.user_auth.UserAuthException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,6 +16,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UserAuthException.class)
+    public ResponseEntity<ApiResult<?>> handlerUserAuthException(UserAuthException e) {
+        ErrorCode code = e.getErrorCode();
+
+        log.warn("UserAuthException : code={}, message={}", code.getCode(), code.getMessage(), e);
+
+        return ResponseEntity
+                .status(code.getStatus())
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
+    }
 
     @ExceptionHandler(SubscriptionException.class)
     public ResponseEntity<ApiResult<?>> handlerSubscriptionException(SubscriptionException e) {

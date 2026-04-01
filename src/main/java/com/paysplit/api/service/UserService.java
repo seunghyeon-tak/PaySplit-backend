@@ -8,8 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-import static com.paysplit.common.error.user.UserErrorCode.LEFT_USER;
-import static com.paysplit.common.error.user.UserErrorCode.USER_NOT_FOUND;
+import static com.paysplit.common.error.user.UserErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,4 +25,25 @@ public class UserService {
             throw new UserException(LEFT_USER);
         }
     }
+
+    public User getByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException(EMAIL_NOT_FOUND));
+    }
+
+    public void validateEmail(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new UserException(DUPLICATE_EMAIL);
+        }
+    }
+
+    public User createUser(String name, String email) {
+        User user = User.builder()
+                .name(name)
+                .email(email)
+                .build();
+
+        return userRepository.save(user);
+    }
+
 }
