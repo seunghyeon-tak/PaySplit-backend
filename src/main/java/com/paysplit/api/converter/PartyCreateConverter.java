@@ -4,7 +4,6 @@ import com.paysplit.api.dto.party.response.PartyCreateResponse;
 import com.paysplit.common.annotation.Converter;
 import com.paysplit.db.domain.Party;
 import com.paysplit.db.domain.Subscription;
-import lombok.RequiredArgsConstructor;
 
 @Converter
 public class PartyCreateConverter {

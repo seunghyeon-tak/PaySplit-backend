@@ -3,7 +3,6 @@ package com.paysplit.api.converter;
 import com.paysplit.api.dto.party.response.PartyFindByCodeResponse;
 import com.paysplit.common.annotation.Converter;
 import com.paysplit.db.domain.Party;
-import lombok.RequiredArgsConstructor;
 
 @Converter
 public class PartyFindByCodeConverter {
