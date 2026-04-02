@@ -28,6 +28,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class UserRegisterIntegrationTest {
+
+    private static final String TEST_PASSWORD = "testPassword123!";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -50,7 +53,7 @@ public class UserRegisterIntegrationTest {
         RegisterRequest request = RegisterRequest.builder()
                 .name("test0099")
                 .email("test0099@test.com")
-                .password("1234!")
+                .password(TEST_PASSWORD)
                 .build();
 
         // when
@@ -73,7 +76,7 @@ public class UserRegisterIntegrationTest {
         RegisterRequest request = RegisterRequest.builder()
                 .name(user.getName())
                 .email(user.getEmail())
-                .password("123123!")
+                .password(TEST_PASSWORD)
                 .build();
 
         // when & then
