@@ -29,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class ReissueIntegrationTest {
 
+    private static final String TEST_PASSWORD = "testPassword1234!";
+
     @Autowired
     private ReissueBusiness reissueBusiness;
 
@@ -57,12 +59,12 @@ public class ReissueIntegrationTest {
         userRegisterBusiness.create(RegisterRequest.builder()
                 .name("test0099")
                 .email("test0099@test.com")
-                .password("1234!")
+                .password(TEST_PASSWORD)
                 .build());
 
         LoginResponse loginResponse = userLoginBusiness.login(LoginRequest.builder()
                 .email("test0099@test.com")
-                .password("1234!")
+                .password(TEST_PASSWORD)
                 .build());
 
         ReissueRequest request = ReissueRequest.builder()
@@ -83,12 +85,12 @@ public class ReissueIntegrationTest {
         userRegisterBusiness.create(RegisterRequest.builder()
                 .name("test0099")
                 .email("test0099@test.com")
-                .password("1234!")
+                .password(TEST_PASSWORD)
                 .build());
 
         userLoginBusiness.login(LoginRequest.builder()
                 .email("test0099@test.com")
-                .password("1234!")
+                .password(TEST_PASSWORD)
                 .build());
 
         ReissueRequest request = ReissueRequest.builder()
