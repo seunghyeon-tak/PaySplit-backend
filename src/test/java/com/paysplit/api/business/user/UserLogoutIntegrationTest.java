@@ -28,6 +28,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class UserLogoutIntegrationTest {
+    private static final String TEST_PASSWORD = "testPassword1234!";
+
     @Autowired
     private UserRegisterBusiness userRegisterBusiness;
 
@@ -59,12 +61,12 @@ public class UserLogoutIntegrationTest {
         RegisterResponse registerResponse = userRegisterBusiness.create(RegisterRequest.builder()
                 .name("test0099")
                 .email("test0099@test.com")
-                .password("1234!")
+                .password(TEST_PASSWORD)
                 .build());
 
         LoginResponse loginResponse = userLoginBusiness.login(LoginRequest.builder()
                 .email("test0099@test.com")
-                .password("1234!")
+                .password(TEST_PASSWORD)
                 .build());
 
         String bearerToken = "Bearer " + loginResponse.getAccessToken();
