@@ -1,0 +1,1 @@
+alter table party_members add column leave_requested_at datetime null;
