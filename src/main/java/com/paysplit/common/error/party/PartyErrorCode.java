@@ -26,6 +26,16 @@ public enum PartyErrorCode implements ErrorCode {
             "이미 가입 했습니다",
             HttpStatus.CONFLICT
     ),
+    PARTY_LEADER_LEAVE_FAILED(
+            "PARTY_005",
+            "파티장은 파티를 떠날 수 없다",
+            HttpStatus.BAD_REQUEST
+    ),
+    PARTY_LEAVE_FAILED(
+            "PARTY_006",
+            "파티 탈퇴에 실패하였습니다",
+            HttpStatus.BAD_REQUEST
+    ),
     ;
     private final String code;
     private final String message;

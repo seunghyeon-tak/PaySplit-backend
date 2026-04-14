@@ -15,6 +15,11 @@ import java.util.Optional;
 public class PartyService {
     private final PartyRepository partyRepository;
 
+    public Party getById(Long partyId) {
+        return partyRepository.findById(partyId)
+                .orElseThrow(() -> new PartyException(PartyErrorCode.PARTY_NOT_FOUND));
+    }
+
     public Party createParty(Long userId, String code) {
         Party party = Party.builder()
                 .leaderId(userId)
