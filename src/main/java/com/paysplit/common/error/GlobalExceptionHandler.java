@@ -2,6 +2,8 @@ package com.paysplit.common.error;
 
 import com.paysplit.api.response.ApiResult;
 import com.paysplit.common.error.party.PartyException;
+import com.paysplit.common.error.party_member.PartyMemberErrorCode;
+import com.paysplit.common.error.party_member.PartyMemberException;
 import com.paysplit.common.error.payment.PaymentException;
 import com.paysplit.common.error.settlement.SettlementException;
 import com.paysplit.common.error.subscription.SubscriptionException;
@@ -16,6 +18,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(PartyMemberException.class)
+    public ResponseEntity<ApiResult<?>> handlerPartyMemberException(PartyMemberException e) {
+        ErrorCode code = e.getErrorCode();
+
+        log.warn("PartyMemberException : code={}, message={}", code.getCode(), code.getMessage(), e);
+
+        return ResponseEntity
+                .status(code.getStatus())
+                .body(ApiResult.error(code.getCode(), code.getMessage(), null));
+    }
 
     @ExceptionHandler(UserAuthException.class)
     public ResponseEntity<ApiResult<?>> handlerUserAuthException(UserAuthException e) {

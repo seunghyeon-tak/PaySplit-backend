@@ -13,4 +13,12 @@ public class SubscriptionFixture {
                 .status(SubscriptionStatus.ACTIVE)
                 .build();
     }
+
+    public static Subscription pendingPlan(SubscriptionPlan plan, Party party) {
+        return Subscription.builder()
+                .plan(plan)
+                .party(party)
+                .status(SubscriptionStatus.PENDING)
+                .build();
+    }
 }

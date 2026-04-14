@@ -1,16 +1,11 @@
 package com.paysplit.api.controller;
 
-import com.paysplit.api.business.PartyAutoMatchBusiness;
-import com.paysplit.api.business.PartyCreateBusiness;
-import com.paysplit.api.business.PartyFindByCodeBusiness;
-import com.paysplit.api.business.PartyInviteJoinBusiness;
+import com.paysplit.api.business.*;
 import com.paysplit.api.dto.party.request.PartyAutoMatchRequest;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
 import com.paysplit.api.dto.party.request.PartyJoinRequest;
-import com.paysplit.api.dto.party.response.PartyAutoMatchResponse;
-import com.paysplit.api.dto.party.response.PartyCreateResponse;
-import com.paysplit.api.dto.party.response.PartyFindByCodeResponse;
-import com.paysplit.api.dto.party.response.PartyJoinResponse;
+import com.paysplit.api.dto.party.request.PartyLeaveRequest;
+import com.paysplit.api.dto.party.response.*;
 import com.paysplit.api.response.ApiResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +25,7 @@ public class PartyController {
     private final PartyFindByCodeBusiness partyFindByCodeBusiness;
     private final PartyInviteJoinBusiness partyInviteJoinBusiness;
     private final PartyAutoMatchBusiness partyAutoJoinBusiness;
+    private final PartyLeaveBusiness partyLeaveBusiness;
 
     @Operation(
             summary = "파티 생성",
@@ -414,6 +410,12 @@ public class PartyController {
     @PostMapping("/auto")
     public ApiResult<PartyAutoMatchResponse> autoPartyMember(@Valid @RequestBody PartyAutoMatchRequest request) {
         PartyAutoMatchResponse response = partyAutoJoinBusiness.auto(request);
+        return ApiResult.success(response);
+    }
+
+    @DeleteMapping("/{partyId}/members/me")
+    public ApiResult<PartyLeaveResponse> leave(@PathVariable Long partyId, @Valid @RequestBody PartyLeaveRequest request) {
+        PartyLeaveResponse response = partyLeaveBusiness.leave(partyId, request);
         return ApiResult.success(response);
     }
 }

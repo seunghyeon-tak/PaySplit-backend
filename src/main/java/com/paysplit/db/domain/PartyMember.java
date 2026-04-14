@@ -43,6 +43,9 @@ public class PartyMember {
     @Column(length = 20, nullable = false)
     private PartyMemberStatus status;
 
+    @Column(name = "leave_requested_at")
+    private LocalDateTime leaveRequestedAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -53,9 +56,14 @@ public class PartyMember {
 
     public void leave() {
         this.status = PartyMemberStatus.LEFT;
+        this.leaveRequestedAt = LocalDateTime.now();
     }
 
     public void kick() {
         this.status = PartyMemberStatus.KICKED;
+    }
+
+    public void requestLeave() {
+        this.leaveRequestedAt = LocalDateTime.now();
     }
 }
