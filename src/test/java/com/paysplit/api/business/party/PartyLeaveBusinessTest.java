@@ -2,7 +2,6 @@ package com.paysplit.api.business.party;
 
 import com.paysplit.api.business.PartyLeaveBusiness;
 import com.paysplit.api.converter.PartyLeaveConverter;
-import com.paysplit.api.dto.party.request.PartyLeaveRequest;
 import com.paysplit.api.dto.party.response.PartyLeaveResponse;
 import com.paysplit.api.service.PartyMemberService;
 import com.paysplit.api.service.PartyService;
@@ -10,18 +9,25 @@ import com.paysplit.api.service.SubscriptionService;
 import com.paysplit.api.service.UserService;
 import com.paysplit.common.error.party.PartyErrorCode;
 import com.paysplit.common.error.party.PartyException;
+import com.paysplit.common.util.SecurityUtils;
 import com.paysplit.db.domain.Party;
 import com.paysplit.db.domain.PartyMember;
 import com.paysplit.db.domain.Subscription;
 import com.paysplit.db.domain.User;
 import com.paysplit.db.enums.LeaveStatus;
 import com.paysplit.db.enums.SubscriptionStatus;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,15 +53,24 @@ public class PartyLeaveBusinessTest {
     @InjectMocks
     private PartyLeaveBusiness partyLeaveBusiness;
 
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())
+        );
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     @DisplayName("파티 탈퇴 성공 - 즉시 탈퇴")
     void leave_success_immediate() {
         // given
         Long partyId = 1L;
-        Long userId = 1L;
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(userId)
-                .build();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         User user = mock(User.class);
         Party party = mock(Party.class);
@@ -73,7 +88,7 @@ public class PartyLeaveBusinessTest {
         when(partyLeaveConverter.toResponse(user, party, subscription, partyMember, LeaveStatus.IMMEDIATE)).thenReturn(response);
 
         // when
-        PartyLeaveResponse result = partyLeaveBusiness.leave(partyId, request);
+        PartyLeaveResponse result = partyLeaveBusiness.leave(partyId, userId);
 
         // then
         verify(userService).getById(userId);
@@ -90,10 +105,7 @@ public class PartyLeaveBusinessTest {
     void leave_success_reserved() {
         // given
         Long partyId = 1L;
-        Long userId = 1L;
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(userId)
-                .build();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         User user = mock(User.class);
         Party party = mock(Party.class);
@@ -111,7 +123,7 @@ public class PartyLeaveBusinessTest {
         when(partyLeaveConverter.toResponse(user, party, subscription, partyMember, LeaveStatus.RESERVED)).thenReturn(response);
 
         // when
-        PartyLeaveResponse result = partyLeaveBusiness.leave(partyId, request);
+        PartyLeaveResponse result = partyLeaveBusiness.leave(partyId, userId);
 
         // then
         verify(userService).getById(userId);
@@ -128,10 +140,7 @@ public class PartyLeaveBusinessTest {
     void leave_exception_leaderCannotLeave() {
         // given
         Long partyId = 1L;
-        Long userId = 1L;
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(userId)
-                .build();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         User user = mock(User.class);
         Party party = mock(Party.class);
@@ -144,7 +153,7 @@ public class PartyLeaveBusinessTest {
         when(user.getId()).thenReturn(userId);
 
         // when & then
-        assertThatThrownBy(() -> partyLeaveBusiness.leave(partyId, request))
+        assertThatThrownBy(() -> partyLeaveBusiness.leave(partyId, userId))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.PARTY_LEADER_LEAVE_FAILED.getMessage());
 
@@ -157,10 +166,7 @@ public class PartyLeaveBusinessTest {
     void leave_exception_leaveFailed() {
         // given
         Long partyId = 1L;
-        Long userId = 1L;
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(userId)
-                .build();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         User user = mock(User.class);
         Party party = mock(Party.class);
@@ -176,7 +182,7 @@ public class PartyLeaveBusinessTest {
         when(subscription.getStatus()).thenReturn(SubscriptionStatus.EXPIRED);
 
         // when & then
-        assertThatThrownBy(() -> partyLeaveBusiness.leave(partyId, request))
+        assertThatThrownBy(() -> partyLeaveBusiness.leave(partyId, userId))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.PARTY_LEAVE_FAILED.getMessage());
 

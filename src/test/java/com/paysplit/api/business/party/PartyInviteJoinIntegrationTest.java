@@ -2,7 +2,6 @@ package com.paysplit.api.business.party;
 
 import com.paysplit.PaysplitApplication;
 import com.paysplit.api.business.PartyInviteJoinBusiness;
-import com.paysplit.api.dto.party.request.PartyJoinRequest;
 import com.paysplit.common.error.party.PartyErrorCode;
 import com.paysplit.common.error.party.PartyException;
 import com.paysplit.common.error.user.UserErrorCode;
@@ -17,7 +16,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -58,6 +61,8 @@ public class PartyInviteJoinIntegrationTest {
         platformRepository.deleteAll();
         settlementPolicyRepository.deleteAll();
         userRepository.deleteAll();
+
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -73,12 +78,13 @@ public class PartyInviteJoinIntegrationTest {
         partyMemberRepository.save(PartyMemberFixture.createPartyMember(party, leaderUser));
         subscriptionRepository.save(SubscriptionFixture.activePlan(plan, party));
 
-        PartyJoinRequest request = PartyJoinRequest.builder()
-                .userId(user.getId())
-                .build();
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when
-        partyInviteJoinBusiness.join(party.getInviteCode(), request);
+        partyInviteJoinBusiness.join(party.getInviteCode(), user.getId());
 
         // then
         PartyMember savePartyMember = partyMemberRepository.findByPartyAndUser(party, user).orElseThrow();
@@ -93,12 +99,13 @@ public class PartyInviteJoinIntegrationTest {
         // given
         User user = userRepository.save(UserFixture.activeUser());
 
-        PartyJoinRequest request = PartyJoinRequest.builder()
-                .userId(user.getId())
-                .build();
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when & then
-        assertThatThrownBy(() -> partyInviteJoinBusiness.join("INVALID_CODE", request))
+        assertThatThrownBy(() -> partyInviteJoinBusiness.join("INVALID_CODE", user.getId()))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.PARTY_NOT_FOUND.getMessage());
 
@@ -110,12 +117,13 @@ public class PartyInviteJoinIntegrationTest {
         // given
         User user = userRepository.save(UserFixture.withdrawnUser());
 
-        PartyJoinRequest request = PartyJoinRequest.builder()
-                .userId(user.getId())
-                .build();
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when & then
-        assertThatThrownBy(() -> partyInviteJoinBusiness.join("INVALID_CODE", request))
+        assertThatThrownBy(() -> partyInviteJoinBusiness.join("INVALID_CODE", user.getId()))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.LEFT_USER.getMessage());
     }
@@ -133,12 +141,13 @@ public class PartyInviteJoinIntegrationTest {
         partyMemberRepository.save(PartyMemberFixture.createPartyMember(party, leaderUser));
         subscriptionRepository.save(SubscriptionFixture.activePlan(plan, party));
 
-        PartyJoinRequest request = PartyJoinRequest.builder()
-                .userId(user.getId())
-                .build();
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when & then
-        assertThatThrownBy(() -> partyInviteJoinBusiness.join(party.getInviteCode(), request))
+        assertThatThrownBy(() -> partyInviteJoinBusiness.join(party.getInviteCode(), user.getId()))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.PARTY_MEMBER_FULL.getMessage());
     }
@@ -157,12 +166,13 @@ public class PartyInviteJoinIntegrationTest {
         partyMemberRepository.save(PartyMemberFixture.createPartyMember(party, user));
         subscriptionRepository.save(SubscriptionFixture.activePlan(plan, party));
 
-        PartyJoinRequest request = PartyJoinRequest.builder()
-                .userId(user.getId())
-                .build();
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when & then
-        assertThatThrownBy(() -> partyInviteJoinBusiness.join(party.getInviteCode(), request))
+        assertThatThrownBy(() -> partyInviteJoinBusiness.join(party.getInviteCode(), user.getId()))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.ALREADY_JOINED.getMessage());
     }

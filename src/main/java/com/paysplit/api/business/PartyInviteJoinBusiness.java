@@ -1,7 +1,6 @@
 package com.paysplit.api.business;
 
 import com.paysplit.api.converter.PartyInviteJoinConverter;
-import com.paysplit.api.dto.party.request.PartyJoinRequest;
 import com.paysplit.api.dto.party.response.PartyJoinResponse;
 import com.paysplit.api.service.*;
 import com.paysplit.common.annotation.Business;
@@ -25,9 +24,7 @@ public class PartyInviteJoinBusiness {
     private final PartyMemberService partyMemberService;
     private final PartyInviteJoinConverter partyInviteJoinConverter;
 
-    public PartyJoinResponse join(String inviteCode, PartyJoinRequest request) {
-        Long userId = request.getUserId();
-
+    public PartyJoinResponse join(String inviteCode, Long userId) {
         // 사용자 확인
         User user = userService.getById(userId);
 

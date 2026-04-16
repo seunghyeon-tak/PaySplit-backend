@@ -12,12 +12,17 @@ import com.paysplit.db.domain.*;
 import com.paysplit.db.repository.*;
 import com.paysplit.support.*;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,6 +64,8 @@ public class PartyAutoMatchIntegrationTest {
         platformRepository.deleteAll();
         settlementPolicyRepository.deleteAll();
         userRepository.deleteAll();
+
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -70,13 +77,17 @@ public class PartyAutoMatchIntegrationTest {
         Platform platform = platformRepository.save(PlatformFixture.activePlatform());
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
+
         PartyAutoMatchRequest request = PartyAutoMatchRequest.builder()
                 .planId(plan.getId())
-                .userId(user.getId())
                 .build();
 
         // when
-        PartyAutoMatchResponse response = partyAutoMatchBusiness.auto(request);
+        PartyAutoMatchResponse response = partyAutoMatchBusiness.auto(user.getId(), request);
 
         // then
         assertThat(response.getStatus()).isEqualTo("WAITING");
@@ -98,14 +109,17 @@ public class PartyAutoMatchIntegrationTest {
         partyMemberRepository.save(PartyMemberFixture.createPartyMember(party, leaderUser));
         subscriptionRepository.save(SubscriptionFixture.activePlan(plan, party));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(joinUser.getId(), null, Collections.emptyList())
+        );
 
         PartyAutoMatchRequest request = PartyAutoMatchRequest.builder()
                 .planId(plan.getId())
-                .userId(joinUser.getId())
                 .build();
 
         // when
-        PartyAutoMatchResponse response = partyAutoMatchBusiness.auto(request);
+        PartyAutoMatchResponse response = partyAutoMatchBusiness.auto(joinUser.getId(), request);
 
         // then
         assertThat(response.getStatus()).isEqualTo("JOINED");
@@ -120,11 +134,10 @@ public class PartyAutoMatchIntegrationTest {
         // given
         PartyAutoMatchRequest request = PartyAutoMatchRequest.builder()
                 .planId(1L)
-                .userId(999L)
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> partyAutoMatchBusiness.auto(request))
+        assertThatThrownBy(() -> partyAutoMatchBusiness.auto(999L, request))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.USER_NOT_FOUND.getMessage());
     }
@@ -134,13 +147,18 @@ public class PartyAutoMatchIntegrationTest {
     void get_exception_leftUser() {
         // given
         User user = userRepository.save(UserFixture.withdrawnUser());
+
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
+
         PartyAutoMatchRequest request = PartyAutoMatchRequest.builder()
                 .planId(1L)
-                .userId(user.getId())
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> partyAutoMatchBusiness.auto(request))
+        assertThatThrownBy(() -> partyAutoMatchBusiness.auto(user.getId(), request))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.LEFT_USER.getMessage());
     }
@@ -158,13 +176,17 @@ public class PartyAutoMatchIntegrationTest {
         subscriptionRepository.save(SubscriptionFixture.activePlan(plan, party));
         partyMemberRepository.save(PartyMemberFixture.createPartyMember(party, joinUser));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(joinUser.getId(), null, Collections.emptyList())
+        );
+
         PartyAutoMatchRequest request = PartyAutoMatchRequest.builder()
                 .planId(plan.getId())
-                .userId(joinUser.getId())
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> partyAutoMatchBusiness.auto(request))
+        assertThatThrownBy(() -> partyAutoMatchBusiness.auto(joinUser.getId(), request))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.ALREADY_JOINED.getMessage());
     }
