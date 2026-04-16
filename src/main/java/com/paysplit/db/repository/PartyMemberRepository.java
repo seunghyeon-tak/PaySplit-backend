@@ -37,4 +37,6 @@ public interface PartyMemberRepository extends JpaRepository<PartyMember, Long> 
         and s.endedAt <= :now
         """)
     List<PartyMember> findExpiredLeaveRequests(@Param("now") LocalDateTime now);
+
+    List<PartyMember> findByPartyIdAndStatus(Long partyId, PartyMemberStatus status);
 }

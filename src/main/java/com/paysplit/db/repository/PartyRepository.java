@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface PartyRepository extends JpaRepository<Party, Long> {
@@ -24,4 +26,14 @@ public interface PartyRepository extends JpaRepository<Party, Long> {
     and (select count(pm) from PartyMember pm where pm.party.id = p.id and pm.status = 'ACTIVE') < sp.maxMembers
     """)
     Optional<Party> findAvailableParty(@Param("planId") Long planId);
+
+    @Query("""
+                select p
+                from Party p
+                join Subscription s on s.party.id = p.id
+                where p.disbandRequestedAt is not null
+                and s.status != 'DISBANDED'
+                and s.endedAt <= :now
+            """)
+    List<Party> findPartyDisbandRequests(@Param("now") LocalDateTime now);
 }

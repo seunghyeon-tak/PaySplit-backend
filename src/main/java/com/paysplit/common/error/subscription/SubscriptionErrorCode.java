@@ -16,6 +16,11 @@ public enum SubscriptionErrorCode implements ErrorCode {
             "이미 사용중인 구독 입니다",
             HttpStatus.CONFLICT
     ),
+    SUBSCRIPTION_CANCEL_FAILED(
+            "SUBSCRIPTION_003",
+            "구독 취소에 실패하였습니다",
+            HttpStatus.BAD_REQUEST
+    ),
     ;
 
     private final String code;

@@ -36,6 +36,11 @@ public enum PartyErrorCode implements ErrorCode {
             "파티 탈퇴에 실패하였습니다",
             HttpStatus.BAD_REQUEST
     ),
+    PARTY_NOT_LEADER(
+            "PARTY_007",
+            "파티장이 존재하지 않습니다",
+            HttpStatus.NOT_FOUND
+    ),
     ;
     private final String code;
     private final String message;

@@ -1,0 +1,1 @@
+alter table parties add column disband_requested_at datetime null;
