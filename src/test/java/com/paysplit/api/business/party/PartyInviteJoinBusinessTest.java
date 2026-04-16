@@ -2,19 +2,25 @@ package com.paysplit.api.business.party;
 
 import com.paysplit.api.business.PartyInviteJoinBusiness;
 import com.paysplit.api.converter.PartyInviteJoinConverter;
-import com.paysplit.api.dto.party.request.PartyJoinRequest;
 import com.paysplit.api.dto.party.response.PartyJoinResponse;
 import com.paysplit.api.service.*;
+import com.paysplit.common.util.SecurityUtils;
 import com.paysplit.db.domain.Party;
 import com.paysplit.db.domain.Subscription;
 import com.paysplit.db.domain.SubscriptionPlan;
 import com.paysplit.db.domain.User;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -42,16 +48,24 @@ public class PartyInviteJoinBusinessTest {
     @InjectMocks
     private PartyInviteJoinBusiness partyInviteJoinBusiness;
 
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())
+        );
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     @DisplayName("초대 코드로 파티에 정상 가입 하였습니다")
     void join_success() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         String inviteCode = "TESTJOINCODE";
-
-        PartyJoinRequest request = PartyJoinRequest.builder()
-                .userId(userId)
-                .build();
 
         User user = mock(User.class);
         Party party = mock(Party.class);
@@ -66,7 +80,7 @@ public class PartyInviteJoinBusinessTest {
         when(partyInviteJoinConverter.toResponse(party.getId(), plan.getId(), plan.getName())).thenReturn(response);
 
         // when
-        PartyJoinResponse result = partyInviteJoinBusiness.join(inviteCode, request);
+        PartyJoinResponse result = partyInviteJoinBusiness.join(inviteCode, userId);
 
         // then
         verify(userService).getById(userId);

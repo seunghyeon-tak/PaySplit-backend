@@ -2,7 +2,6 @@ package com.paysplit.api.business.party;
 
 import com.paysplit.PaysplitApplication;
 import com.paysplit.api.business.PartyLeaveBusiness;
-import com.paysplit.api.dto.party.request.PartyLeaveRequest;
 import com.paysplit.api.dto.party.response.PartyLeaveResponse;
 import com.paysplit.common.error.party.PartyErrorCode;
 import com.paysplit.common.error.party.PartyException;
@@ -18,7 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -60,6 +63,8 @@ public class PartyLeaveIntegrationTest {
         platformRepository.deleteAll();
         settlementPolicyRepository.deleteAll();
         userRepository.deleteAll();
+
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -75,12 +80,13 @@ public class PartyLeaveIntegrationTest {
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.recuitingParty(policy, platform));
         Subscription subscription = subscriptionRepository.save(SubscriptionFixture.pendingPlan(plan, party));
 
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(user.getId())
-                .build();
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when
-        PartyLeaveResponse response = partyLeaveBusiness.leave(party.getId(), request);
+        PartyLeaveResponse response = partyLeaveBusiness.leave(party.getId(), user.getId());
 
         // then
         assertThat(response.getUserId()).isEqualTo(user.getId());
@@ -102,12 +108,13 @@ public class PartyLeaveIntegrationTest {
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
         Subscription subscription = subscriptionRepository.save(SubscriptionFixture.activePlan(plan, party));
 
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(user.getId())
-                .build();
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when
-        PartyLeaveResponse response = partyLeaveBusiness.leave(party.getId(), request);
+        PartyLeaveResponse response = partyLeaveBusiness.leave(party.getId(), user.getId());
 
         // then
         assertThat(response.getUserId()).isEqualTo(user.getId());
@@ -120,12 +127,10 @@ public class PartyLeaveIntegrationTest {
     @DisplayName("존재하지 않는 유저가 있으면 UserException 발생")
     void leave_exception_userNotFound() {
         // given
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(999L)
-                .build();
+        Long userId = 999L;
 
         // when & then
-        assertThatThrownBy(() -> partyLeaveBusiness.leave(1L, request))
+        assertThatThrownBy(() -> partyLeaveBusiness.leave(1L, userId))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.USER_NOT_FOUND.getMessage());
     }
@@ -135,12 +140,14 @@ public class PartyLeaveIntegrationTest {
     void leave_exception_partyNotFound() {
         // given
         User user = userRepository.save(UserFixture.partyMemberUser());
-        PartyLeaveRequest request = PartyLeaveRequest.builder()
-                .userId(user.getId())
-                .build();
+
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
 
         // when & then
-        assertThatThrownBy(() -> partyLeaveBusiness.leave(999L, request))
+        assertThatThrownBy(() -> partyLeaveBusiness.leave(999L, user.getId()))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.PARTY_NOT_FOUND.getMessage());
     }

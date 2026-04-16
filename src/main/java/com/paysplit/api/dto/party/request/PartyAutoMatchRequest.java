@@ -12,10 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class PartyAutoMatchRequest {
-    @Schema(name = "user_id", description = "유저 ID", example = "1")
-    @NotNull
-    private Long userId;
-
     @Schema(name = "plan_id", description = "구독 플랜 ID", example = "1")
     @NotNull
     private Long planId;

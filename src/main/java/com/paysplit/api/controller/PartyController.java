@@ -3,10 +3,9 @@ package com.paysplit.api.controller;
 import com.paysplit.api.business.*;
 import com.paysplit.api.dto.party.request.PartyAutoMatchRequest;
 import com.paysplit.api.dto.party.request.PartyCreateRequest;
-import com.paysplit.api.dto.party.request.PartyJoinRequest;
-import com.paysplit.api.dto.party.request.PartyLeaveRequest;
 import com.paysplit.api.dto.party.response.*;
 import com.paysplit.api.response.ApiResult;
+import com.paysplit.common.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -110,7 +109,8 @@ public class PartyController {
     )
     @PostMapping
     public ApiResult<PartyCreateResponse> create(@Valid @RequestBody PartyCreateRequest request) {
-        PartyCreateResponse response = partyCreateBusiness.create(request);
+        Long userId = SecurityUtils.getCurrentUserId();
+        PartyCreateResponse response = partyCreateBusiness.create(userId, request);
         return ApiResult.success(response);
     }
 
@@ -314,8 +314,9 @@ public class PartyController {
             }
     )
     @PostMapping("/join")
-    public ApiResult<PartyJoinResponse> joinPartyMember(@RequestParam String inviteCode, @Valid @RequestBody PartyJoinRequest request) {
-        PartyJoinResponse response = partyInviteJoinBusiness.join(inviteCode, request);
+    public ApiResult<PartyJoinResponse> joinPartyMember(@RequestParam String inviteCode) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        PartyJoinResponse response = partyInviteJoinBusiness.join(inviteCode, userId);
         return ApiResult.success(response);
     }
 
@@ -409,13 +410,15 @@ public class PartyController {
     )
     @PostMapping("/auto")
     public ApiResult<PartyAutoMatchResponse> autoPartyMember(@Valid @RequestBody PartyAutoMatchRequest request) {
-        PartyAutoMatchResponse response = partyAutoJoinBusiness.auto(request);
+        Long userId = SecurityUtils.getCurrentUserId();
+        PartyAutoMatchResponse response = partyAutoJoinBusiness.auto(userId, request);
         return ApiResult.success(response);
     }
 
     @DeleteMapping("/{partyId}/members/me")
-    public ApiResult<PartyLeaveResponse> leave(@PathVariable Long partyId, @Valid @RequestBody PartyLeaveRequest request) {
-        PartyLeaveResponse response = partyLeaveBusiness.leave(partyId, request);
+    public ApiResult<PartyLeaveResponse> leave(@PathVariable Long partyId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        PartyLeaveResponse response = partyLeaveBusiness.leave(partyId, userId);
         return ApiResult.success(response);
     }
 }
