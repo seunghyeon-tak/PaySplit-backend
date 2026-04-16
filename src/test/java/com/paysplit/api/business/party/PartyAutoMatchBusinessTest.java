@@ -5,16 +5,22 @@ import com.paysplit.api.converter.PartyAutoMatchConverter;
 import com.paysplit.api.dto.party.request.PartyAutoMatchRequest;
 import com.paysplit.api.dto.party.response.PartyAutoMatchResponse;
 import com.paysplit.api.service.*;
+import com.paysplit.common.util.SecurityUtils;
 import com.paysplit.db.domain.Party;
 import com.paysplit.db.domain.SubscriptionPlan;
 import com.paysplit.db.domain.User;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,15 +49,26 @@ public class PartyAutoMatchBusinessTest {
     @InjectMocks
     private PartyAutoMatchBusiness partyAutoMatchBusiness;
 
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())
+        );
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     @DisplayName("파티 자동 매칭이 정상적으로 실행된다. - WAITING")
     void waiting_match_party_success() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         Long planId = 1L;
 
         PartyAutoMatchRequest request = PartyAutoMatchRequest.builder()
-                .userId(userId)
                 .planId(planId)
                 .build();
 
@@ -65,7 +82,7 @@ public class PartyAutoMatchBusinessTest {
         when(partyAutoMatchConverter.toResponse("WAITING", null, plan.getId(), plan.getName())).thenReturn(response);
 
         // when
-        PartyAutoMatchResponse result = partyAutoMatchBusiness.auto(request);
+        PartyAutoMatchResponse result = partyAutoMatchBusiness.auto(userId, request);
 
         // then
         verify(userService).getById(userId);
@@ -81,11 +98,10 @@ public class PartyAutoMatchBusinessTest {
     @DisplayName("파티 자동 매칭이 정상적으로 실행된다. - JOINED")
     void joined_match_party_success() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         Long planId = 1L;
 
         PartyAutoMatchRequest request = PartyAutoMatchRequest.builder()
-                .userId(userId)
                 .planId(planId)
                 .build();
 
@@ -100,7 +116,7 @@ public class PartyAutoMatchBusinessTest {
         when(partyAutoMatchConverter.toResponse("JOINED", party.getId(), plan.getId(), plan.getName())).thenReturn(response);
 
         // when
-        PartyAutoMatchResponse result = partyAutoMatchBusiness.auto(request);
+        PartyAutoMatchResponse result = partyAutoMatchBusiness.auto(userId, request);
 
         // then
         verify(userService).getById(userId);

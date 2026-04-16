@@ -1,7 +1,6 @@
 package com.paysplit.api.business;
 
 import com.paysplit.api.converter.PartyLeaveConverter;
-import com.paysplit.api.dto.party.request.PartyLeaveRequest;
 import com.paysplit.api.dto.party.response.PartyLeaveResponse;
 import com.paysplit.api.service.PartyMemberService;
 import com.paysplit.api.service.PartyService;
@@ -31,9 +30,7 @@ public class PartyLeaveBusiness {
     private final SubscriptionService subscriptionService;
     private final PartyLeaveConverter partyLeaveConverter;
 
-    public PartyLeaveResponse leave(Long partyId, PartyLeaveRequest request) {
-        Long userId = request.getUserId();
-
+    public PartyLeaveResponse leave(Long partyId, Long userId) {
         // 사용자 확인
         User user = userService.getById(userId);
 

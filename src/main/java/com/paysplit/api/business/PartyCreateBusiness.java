@@ -27,8 +27,7 @@ public class PartyCreateBusiness {
     private final SubscriptionPlanService subscriptionPlanService;
     private final SubscriptionService subscriptionService;
 
-    public PartyCreateResponse create(PartyCreateRequest request) {
-        Long userId = request.getUserId();
+    public PartyCreateResponse create(Long userId, PartyCreateRequest request) {
         Long planId = request.getPlanId();
 
         // 요청한 사용자 존재 확인

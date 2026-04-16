@@ -26,8 +26,7 @@ public class PartyAutoMatchBusiness {
     private final PartyAutoMatchConverter partyAutoMatchConverter;
     private final WaitingQueueService waitingQueueService;
 
-    public PartyAutoMatchResponse auto(PartyAutoMatchRequest request) {
-        Long userId = request.getUserId();
+    public PartyAutoMatchResponse auto(Long userId, PartyAutoMatchRequest request) {
         Long planId = request.getPlanId();
 
         // 사용자 확인

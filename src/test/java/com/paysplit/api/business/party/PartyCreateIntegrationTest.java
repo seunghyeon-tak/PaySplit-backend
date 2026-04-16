@@ -20,7 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -66,6 +70,8 @@ public class PartyCreateIntegrationTest {
         platformRepository.deleteAll();
         settlementPolicyRepository.deleteAll();
         userRepository.deleteAll();
+
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -78,15 +84,19 @@ public class PartyCreateIntegrationTest {
         Platform platform = platformRepository.save(PlatformFixture.activePlatform());
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(leaderUser.getId(), null, Collections.emptyList())
+        );
+
         waitingQueueService.addToWaitingQueue(plan.getId(), waitingUser.getId());
 
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(leaderUser.getId())
                 .planId(plan.getId())
                 .build();
 
         // when
-        partyCreateBusiness.create(request);
+        partyCreateBusiness.create(leaderUser.getId(), request);
 
         // then
         Party party = partyRepository.findByLeaderId(leaderUser.getId()).orElseThrow();
@@ -102,13 +112,17 @@ public class PartyCreateIntegrationTest {
         Platform platform = platformRepository.save(PlatformFixture.activePlatform());
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
+
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(user.getId())
                 .planId(plan.getId())
                 .build();
 
         // when
-        partyCreateBusiness.create(request);
+        partyCreateBusiness.create(user.getId(), request);
 
         // then
         Party saveParty = partyRepository.findByLeaderId(user.getId()).orElseThrow();
@@ -128,13 +142,17 @@ public class PartyCreateIntegrationTest {
         Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
+
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(user.getId())
                 .planId(plan.getId())
                 .build();
 
         // when
-        partyCreateBusiness.create(request);
+        partyCreateBusiness.create(user.getId(), request);
 
         // then
         Party savedParty = partyRepository.findByLeaderId(user.getId()).orElseThrow();
@@ -154,13 +172,17 @@ public class PartyCreateIntegrationTest {
         Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
+
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(user.getId())
                 .planId(plan.getId())
                 .build();
 
         // when
-        partyCreateBusiness.create(request);
+        partyCreateBusiness.create(user.getId(), request);
 
         // then
         Party savedParty = partyRepository.findByLeaderId(user.getId()).orElseThrow();
@@ -179,13 +201,17 @@ public class PartyCreateIntegrationTest {
         Platform platform = platformRepository.save(platformRepository.save(PlatformFixture.activePlatform()));
         SubscriptionPlan plan = subscriptionPlanRepository.save(SubscriptionPlanFixture.activePlan(policy, platform));
 
+        // securityContext 인증 정보 확인
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user.getId(), null, Collections.emptyList())
+        );
+
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(user.getId())
                 .planId(plan.getId())
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> partyCreateBusiness.create(request))
+        assertThatThrownBy(() -> partyCreateBusiness.create(user.getId(), request))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.LEFT_USER.getMessage());
 
@@ -199,12 +225,11 @@ public class PartyCreateIntegrationTest {
     void create_exception_partyCreateUserNotFound() {
         // given
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(999L)
                 .planId(999L)
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> partyCreateBusiness.create(request))
+        assertThatThrownBy(() -> partyCreateBusiness.create(999L, request))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.USER_NOT_FOUND.getMessage());
 

@@ -11,10 +11,13 @@ import com.paysplit.common.error.subscriptionplan.SubscriptionPlanErrorCode;
 import com.paysplit.common.error.subscriptionplan.SubscriptionPlanException;
 import com.paysplit.common.error.user.UserErrorCode;
 import com.paysplit.common.error.user.UserException;
+import com.paysplit.common.util.SecurityUtils;
 import com.paysplit.db.domain.Party;
 import com.paysplit.db.domain.Subscription;
 import com.paysplit.db.domain.SubscriptionPlan;
 import com.paysplit.db.domain.User;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +25,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -54,15 +61,26 @@ class PartyCreateBusinessTest {
     @InjectMocks
     private PartyCreateBusiness partyCreateBusiness;
 
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, Collections.emptyList())
+        );
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     @DisplayName("파티 생성이 정상적으로 실행된다.")
     void create_party_success() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(userId)
                 .planId(planId)
                 .build();
 
@@ -82,7 +100,7 @@ class PartyCreateBusinessTest {
         when(partyCreateConverter.toResponse(party, subscription)).thenReturn(response);
 
         // when
-        PartyCreateResponse result = partyCreateBusiness.create(request);
+        PartyCreateResponse result = partyCreateBusiness.create(userId, request);
 
         // then
         verify(userService).validateNotWithdrawn(user);
@@ -102,18 +120,17 @@ class PartyCreateBusinessTest {
     @DisplayName("존재하지 않는 유저가 파티 생성시 UserException이 발생한다.")
     void create_party_whenGetById_throwException() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(userId)
                 .planId(planId)
                 .build();
 
         when(userService.getById(userId)).thenThrow(new UserException(UserErrorCode.USER_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> partyCreateBusiness.create(request))
+        assertThatThrownBy(() -> partyCreateBusiness.create(userId, request))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.USER_NOT_FOUND.getMessage());
 
@@ -125,11 +142,10 @@ class PartyCreateBusinessTest {
     @DisplayName("탈퇴한 유저가 파티 생성 시 UserException이 발생한다.")
     void create_party_whenWithdrawnUser_throwException() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(userId)
                 .planId(planId)
                 .build();
 
@@ -140,7 +156,7 @@ class PartyCreateBusinessTest {
                 .when(userService).validateNotWithdrawn(user);
 
         // when & then
-        assertThatThrownBy(() -> partyCreateBusiness.create(request))
+        assertThatThrownBy(() -> partyCreateBusiness.create(userId, request))
                 .isInstanceOf(UserException.class)
                 .hasMessageContaining(UserErrorCode.LEFT_USER.getMessage());
 
@@ -152,11 +168,10 @@ class PartyCreateBusinessTest {
     @DisplayName("플랜 존재 확인시 구독 플랜 정보 찾을 수 없을때 SubscriptionException이 발생한다.")
     void create_party_getById_throwException() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(userId)
                 .planId(planId)
                 .build();
 
@@ -167,7 +182,7 @@ class PartyCreateBusinessTest {
                 .thenThrow(new SubscriptionPlanException(SubscriptionPlanErrorCode.PLAN_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> partyCreateBusiness.create(request))
+        assertThatThrownBy(() -> partyCreateBusiness.create(userId, request))
                 .isInstanceOf(SubscriptionPlanException.class)
                 .hasMessageContaining(SubscriptionPlanErrorCode.PLAN_NOT_FOUND.getMessage());
 
@@ -180,11 +195,10 @@ class PartyCreateBusinessTest {
     @DisplayName("초대코드 3회 충돌시 PartyException이 발생한다.")
     void create_party_generateUniqueInviteCode_throwException() {
         // given
-        Long userId = 1L;
+        Long userId = SecurityUtils.getCurrentUserId();
         Long planId = 1L;
 
         PartyCreateRequest request = PartyCreateRequest.builder()
-                .userId(userId)
                 .planId(planId)
                 .build();
 
@@ -194,7 +208,7 @@ class PartyCreateBusinessTest {
         when(partyService.existInviteCode(any())).thenReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> partyCreateBusiness.create(request))
+        assertThatThrownBy(() -> partyCreateBusiness.create(userId, request))
                 .isInstanceOf(PartyException.class)
                 .hasMessageContaining(PartyErrorCode.INVITE_CODE_GENERATE_FAILED.getMessage());
 
