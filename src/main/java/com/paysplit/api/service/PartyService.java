@@ -42,4 +42,22 @@ public class PartyService {
     public Optional<Party> findAvailableParty(Long planId) {
         return partyRepository.findAvailableParty(planId);
     }
+
+    public void partyDisband(Long partyId) {
+        Party party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new PartyException(PartyErrorCode.PARTY_NOT_FOUND));
+        party.disband();
+    }
+
+    public void validatePartyLeader(Long partyId, Long userId) {
+        Party party = getById(partyId);
+        if (!party.getLeaderId().equals(userId)) {
+            throw new PartyException(PartyErrorCode.PARTY_NOT_LEADER);
+        }
+    }
+
+    public void requestDisband(Long partyId) {
+        Party party = getById(partyId);
+        party.requestDisband();
+    }
 }

@@ -33,6 +33,9 @@ public class Party {
     @Column(name = "invite_code", length = 50, unique = true)
     private String inviteCode;
 
+    @Column(name = "disband_requested_at")
+    private LocalDateTime disbandRequestedAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -40,6 +43,10 @@ public class Party {
     public void disband() {
         this.status = PartyStatus.DISBANDED;
         this.inviteCode = null;
+    }
+
+    public void requestDisband() {
+        this.disbandRequestedAt = LocalDateTime.now();
     }
 
     public void activate() {
