@@ -59,11 +59,17 @@ public class Subscription {
 
     public void cancel() {
         this.status = SubscriptionStatus.CANCELED;
+        this.endedAt = LocalDateTime.now();
     }
 
     public void renewTo(LocalDateTime newStartedAt, LocalDateTime newEndedAt) {
         this.startedAt = newStartedAt;
         this.endedAt = newEndedAt;
         this.status = SubscriptionStatus.ACTIVE;
+    }
+
+    public void reservationCancel() {
+        this.status = SubscriptionStatus.CANCELED;
+        this.endedAt = LocalDateTime.now();
     }
 }

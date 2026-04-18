@@ -29,4 +29,11 @@ public class SubscriptionService {
         return subscriptionRepository.findByPartyId(party.getId())
                 .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.SUBSCRIPTION_NOT_FOUND));
     }
+
+    public void subscriptionCancel(Long subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.SUBSCRIPTION_NOT_FOUND));
+
+        subscription.cancel();
+    }
 }

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -63,5 +64,13 @@ public class PartyMemberService {
                 .orElseThrow(() -> new PartyMemberException(PartyMemberErrorCode.PARTY_MEMBER_NOT_FOUND));
 
         partyMember.requestLeave();
+    }
+
+    public void leaveAllPartyMembers(Long partyId) {
+        List<PartyMember> partyMemberList = partyMemberRepository.findByPartyIdAndStatus(partyId, PartyMemberStatus.ACTIVE);
+
+        for (PartyMember member : partyMemberList) {
+            member.leave();
+        }
     }
 }

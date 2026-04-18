@@ -25,6 +25,7 @@ public class PartyController {
     private final PartyInviteJoinBusiness partyInviteJoinBusiness;
     private final PartyAutoMatchBusiness partyAutoJoinBusiness;
     private final PartyLeaveBusiness partyLeaveBusiness;
+    private final PartyDisbandBusiness partyDisbandBusiness;
 
     @Operation(
             summary = "파티 생성",
@@ -419,6 +420,13 @@ public class PartyController {
     public ApiResult<PartyLeaveResponse> leave(@PathVariable Long partyId) {
         Long userId = SecurityUtils.getCurrentUserId();
         PartyLeaveResponse response = partyLeaveBusiness.leave(partyId, userId);
+        return ApiResult.success(response);
+    }
+
+    @DeleteMapping("/{partyId}")
+    public ApiResult<PartyDisbandResponse> disband(@PathVariable Long partyId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        PartyDisbandResponse response = partyDisbandBusiness.disband(partyId, userId);
         return ApiResult.success(response);
     }
 }
