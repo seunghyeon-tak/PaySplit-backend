@@ -42,3 +42,7 @@ jwt:
   secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2Utb25seQ==
   access-token-expiration: 3600000
   refresh-token-expiration: 604800000
+
+toss:
+  secret-key: test_sk_dummy
+  base-url: https://api.tosspayments.com

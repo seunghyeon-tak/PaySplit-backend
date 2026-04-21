@@ -47,6 +47,9 @@ public class Payment {
     @Column(name = "payer_id", nullable = false)
     private Long payerId;  // 결제 요청자
 
+    @Column(name = "order_id", length = 64)
+    private String orderId;
+
     @Column(name = "external_payment_id", length = 100)
     private String externalPaymentId;  // 어디서 결제되었는가? (PG사 결제 ID)
 
@@ -55,6 +58,9 @@ public class Payment {
 
     @Column(nullable = false, length = 10)
     private String currency;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 
     @Column(name = "settled_at")
     private LocalDateTime settledAt;  // 결제가 정산되었음을 나타내는 컬럼
@@ -71,5 +77,16 @@ public class Payment {
         return status == PaymentStatus.COMPLETED
                 && amount.compareTo(BigDecimal.ZERO) > 0
                 && settledAt == null;
+    }
+
+    public void approved(String paymentKey, String orderId, LocalDateTime approvedAt) {
+        this.externalPaymentId = paymentKey;
+        this.orderId = orderId;
+        this.approvedAt = approvedAt;
+        this.status = PaymentStatus.COMPLETED;
+    }
+
+    public void fail() {
+        this.status = PaymentStatus.FAILED;
     }
 }
