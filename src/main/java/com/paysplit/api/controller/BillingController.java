@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class BillingController {
     private final BillingKeyBusiness billingKeyBusiness;
-    private final JwtProvider jwtProvider;
 
     @GetMapping("/success")
     public ApiResult<BillingKeyResponse> success(@RequestParam String customerKey, @RequestParam String authKey) {
