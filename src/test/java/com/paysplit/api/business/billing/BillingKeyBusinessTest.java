@@ -56,8 +56,8 @@ public class BillingKeyBusinessTest {
     void issueBillingKey_success() {
         // given
         Long userId = SecurityUtils.getCurrentUserId();
-        String customerKey = "aENcQAtPdYbTjGhtQnNVj";
-        String authKey = "e_826EDB0730790E96F116FFF3799A65DE";
+        String customerKey = "test_customer_key";
+        String authKey = "test_auth_key";
 
         TossBillingKeyResponse tossBillingKeyResponse = mock(TossBillingKeyResponse.class);
         BillingKey billingKey = mock(BillingKey.class);
